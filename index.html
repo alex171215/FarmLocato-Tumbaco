@@ -54,10 +54,13 @@
 
         <div class="info-farmacia">
             <h2 id="bs-nombre">Cargando...</h2>
-            <p id="bs-estado" style="font-weight: bold; margin: 5px 0;"></p>
             <p id="bs-distancia"></p>
-            <p id="bs-horario"></p>
-            <small style="color: #666; font-style: italic;">Horario referencial: Sujeto a disponibilidad.</small>
+            <div id="contenedor-horario">
+                <p id="bs-estado" style="font-weight: bold; margin: 5px 0;"></p>
+                <p id="bs-horario"></p>
+                <small id="bs-advertencia-horario" style="color: #666; font-style: italic;">Horario referencial: Sujeto
+                    a disponibilidad.</small>
+            </div>
         </div>
 
         <div class="acciones-contenedor" style="display: flex; flex-direction: column; gap: 10px;">
