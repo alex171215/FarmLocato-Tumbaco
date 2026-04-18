@@ -131,14 +131,14 @@ function mostrarBottomSheet(farmacia) {
     // 4. Corrección de Enrutamiento (Google Maps Universal)
     const btnNavegar = document.getElementById('btn-navegar');
     btnNavegar.onclick = () => {
-        // Siempre usamos ubicacionActiva (Real si están en Tumbaco, Simulada si están en la PUCE)
+        // Enrutamiento OFICIAL y universal de Google Maps
+        // Toma ubicacionActiva (que será Tumbaco si deniegas o estás en la PUCE) como 'origin'
         const latOrigen = ubicacionActiva[0];
         const lngOrigen = ubicacionActiva[1];
         const latDestino = farmacia.lat;
         const lngDestino = farmacia.lon;
 
-        // URL Oficial de Google Maps Directions (Sin travelmode forzado para que Google decida si es auto o a pie)
-        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}`;
+        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}&travelmode=walking`;
 
         window.open(urlGoogleMaps, '_blank');
     };
@@ -267,7 +267,7 @@ window.addEventListener('load', () => {
         }
     });
 
-    // 3. Lógica del botón de GPS 
+    // 3. Lógica del botón de GPS (Corregido para PC - Sin Timeout)
     btnGPS.onclick = () => {
         if (estaBuscando) return;
         estaBuscando = true;
@@ -275,12 +275,13 @@ window.addEventListener('load', () => {
         btnGPS.textContent = "Solicitando permiso...";
         btnGPS.disabled = true;
 
+        // Opciones SIN timeout para que espere al navegador de la PC el tiempo que sea necesario
+        const opcionesGPS = { enableHighAccuracy: true, maximumAge: 0 };
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const overlay = document.getElementById('loading-overlay');
-                if (overlay) overlay.classList.remove('oculto');
-
                 ubicacionActiva = [position.coords.latitude, position.coords.longitude];
+                // Si está en la PUCE (>5km), lo forzamos a Tumbaco
                 if (calcularDistancia(ubicacionActiva[0], ubicacionActiva[1], centroTumbaco[0], centroTumbaco[1]) > 5) {
                     mostrarAviso("Fuera de zona. Usando centro de Tumbaco.");
                     ubicacionActiva = centroTumbaco;
@@ -293,17 +294,14 @@ window.addEventListener('load', () => {
                 fetchFarmacias();
             },
             () => {
-                const overlay = document.getElementById('loading-overlay');
-                if (overlay) overlay.classList.remove('oculto');
-
                 mostrarAviso("Permiso denegado. Usando centro de Tumbaco.");
-                ubicacionActiva = centroTumbaco;
+                ubicacionActiva = centroTumbaco; // Se asigna Tumbaco como origen
                 document.getElementById('modal-gps').style.display = 'none';
                 map.setView(ubicacionActiva, 15);
 
                 fetchFarmacias();
             },
-            { enableHighAccuracy: true, timeout: 8000 }
+            opcionesGPS
         );
     };
 
