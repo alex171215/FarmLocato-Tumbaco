@@ -215,12 +215,13 @@ html {
 /* Diseño para Desktop (PC) */
 @media (min-width: 768px) {
     #bottom-sheet {
-        left: 1.5rem;
-        bottom: 1.5rem;
-        width: 380px;
-        border-radius: 1rem;
-        transform: translateY(150%);
-        /* Se oculta un poco más lejos en PC */
+        left: 50% !important;
+        transform: translate(-50%, 100%) !important;
+        width: 450px !important;
+        border-radius: 15px 15px 0 0 !important;
+    }
+    #bottom-sheet.activo {
+        transform: translate(-50%, 0) !important;
     }
 }
 
@@ -327,16 +328,6 @@ html {
 
 /* RESPONSIVITY: Desktop (min-width: 768px) */
 @media (min-width: 768px) {
-    .bottom-sheet {
-        position: fixed;
-        bottom: 2rem;
-        left: 2rem;
-        width: 25rem;
-        /* 400px floating card */
-        border-radius: 1rem;
-        box-shadow: 0 8px 32px rgba(27, 28, 28, 0.15);
-    }
-
     .bs-drag-handle {
         display: none;
         /* Hide drag handle on desktop */
