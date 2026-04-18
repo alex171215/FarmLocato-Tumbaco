@@ -80,69 +80,72 @@ const btnGPS = document.getElementById('btn-activar-gps');
 // Se han movido y encapsulado btnGPS.onclick y el evento de recentrar dentro del bloque DOMContentLoaded al final de app.js
 
 
-// Función para mostrar el Bottom Sheet con datos dinámicos
+// Función para poblar y mostrar la tarjeta de información (Bottom Sheet)
 function mostrarBottomSheet(farmacia) {
-    const sheet = document.getElementById('bottom-sheet');
-    const tags = farmacia.tags;
+    const bottomSheet = document.getElementById('bottom-sheet');
+    const tags = farmacia.tags || {};
 
-    // 1. Inyectar Nombre y Distancia (H2 y H6)
+    // 1. Inyectar Nombre y Distancia
     document.getElementById('bs-nombre').textContent = tags.name || "Farmacia sin nombre";
 
-    // Calculamos distancia real usando map.distance (Leaflet)
     const latlngUsuario = L.latLng(ubicacionActiva[0], ubicacionActiva[1]);
     const latlngFarmacia = L.latLng(farmacia.lat, farmacia.lon);
     const distanciaCalculada = Math.round(map.distance(latlngUsuario, latlngFarmacia));
     document.getElementById('bs-distancia').textContent = "Distancia radial: Aprox. " + distanciaCalculada + " m";
 
-    // 2. Lógica de Estado Abierto/Cerrado
-    const estadoElemento = document.getElementById('bs-estado');
-    if (tags.opening_hours === "24/7") {
-        estadoElemento.textContent = "Abierto 24h";
-        estadoElemento.style.color = "var(--color-verde-whatsapp)";
+    // 2. Renderizado Condicional del Horario (Heurística 8)
+    const elemHorario = document.getElementById('bs-horario');
+    if (tags.opening_hours) {
+        elemHorario.textContent = "Horario: " + tags.opening_hours;
+        elemHorario.style.display = 'block'; // Lo mostramos si existe
     } else {
-        estadoElemento.textContent = "Horario: " + (tags.opening_hours || "No disponible");
+        elemHorario.style.display = 'none';  // Lo ocultamos por completo si no hay dato
     }
 
-    // 3. ALGORITMO DE CONTACTO ADAPTATIVO (H5)
-    const btnContacto = document.getElementById('btn-contacto');
-    const textContacto = document.getElementById('text-contacto');
-    const iconContainer = document.getElementById('icon-container');
-    const telefonoRaw = tags.phone || tags['contact:phone'] || "";
-    const telefonoLimpio = telefonoRaw.replace(/\D/g, ''); // Limpieza Regex
+    // 3. Renderizado del Contacto (Celular vs Fijo)
+    const elemContacto = document.getElementById('btn-contacto');
+    const txtContacto = document.getElementById('text-contacto');
+    let telefono = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || "";
 
-    const whatsappSVG = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.445 0 .081 5.363.079 11.969c0 2.112.553 4.177 1.602 6.005L0 24l6.163-1.617a11.83 11.83 0 005.883 1.553h.005c6.602 0 11.967-5.367 11.97-11.97a11.85 11.85 0 00-3.484-8.452"/></svg>`;
-    const phoneSVG = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`;
+    if (telefono) {
+        elemContacto.style.display = 'flex';
+        // Limpiamos el número de espacios o caracteres raros
+        let telLimpio = telefono.replace(/[\s\-\(\)]/g, '');
 
-    const esCelular = telefonoLimpio.startsWith('09') || telefonoLimpio.startsWith('5939');
-
-    if (!telefonoLimpio) {
-        // H5: Prevención de errores si no hay teléfono
-        btnContacto.style.display = 'none';
-    } else {
-        btnContacto.style.display = ''; // Revertir a default (flex/block)
-
-        if (esCelular) {
-            // Es celular -> WhatsApp
-            btnContacto.innerHTML = `${whatsappSVG}<span>Enviar mensaje por WhatsApp</span>`;
-            btnContacto.setAttribute("aria-label", "Enviar mensaje por WhatsApp");
-            btnContacto.style.backgroundColor = "var(--color-verde-whatsapp)";
-            btnContacto.onclick = () => window.open(`https://wa.me/${telefonoLimpio}`, '_blank');
+        // Algoritmo para detectar si es celular (empieza con 09 o +5939) en Ecuador
+        if (telLimpio.startsWith('09') || telLimpio.startsWith('+5939') || telLimpio.startsWith('5939')) {
+            txtContacto.textContent = "WhatsApp";
+            elemContacto.onclick = () => {
+                if (telLimpio.startsWith('09')) telLimpio = '593' + telLimpio.substring(1);
+                else if (telLimpio.startsWith('+')) telLimpio = telLimpio.substring(1);
+                window.open(`https://wa.me/${telLimpio}`, '_blank');
+            };
         } else {
-            // Es fijo -> Llamada tradicional
-            btnContacto.innerHTML = `${phoneSVG}<span>Llamar a farmacia</span>`;
-            btnContacto.setAttribute("aria-label", "Llamar a farmacia");
-            btnContacto.style.backgroundColor = "var(--color-gris-oscuro)";
-            btnContacto.onclick = () => window.location.href = `tel:${telefonoLimpio}`;
+            txtContacto.textContent = "Llamar";
+            elemContacto.onclick = () => {
+                window.open(`tel:${telLimpio}`, '_self');
+            };
         }
+    } else {
+        // Si no hay teléfono, ocultamos el botón de contacto para prevenir errores (Heurística 5)
+        elemContacto.style.display = 'none';
     }
 
-    // 4. Botón "Ir Ahora" (Navegación Delegada)
-    document.getElementById('btn-navegar').onclick = () => {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${farmacia.lat},${farmacia.lon}`, '_blank');
+    // 4. Corrección de Enrutamiento Estricto (Google Maps)
+    const btnNavegar = document.getElementById('btn-navegar');
+    btnNavegar.onclick = () => {
+        const latOrigen = ubicacionActiva[0];
+        const lngOrigen = ubicacionActiva[1];
+        const latDestino = farmacia.lat;
+        const lngDestino = farmacia.lon;
+
+        // URL estructurada con origen y destino explícitos
+        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}&travelmode=walking`;
+        window.open(urlGoogleMaps, '_blank');
     };
 
-    // 5. Mostrar la tarjeta con animación
-    sheet.classList.add('activo');
+    // 5. Mostrar la tarjeta animada
+    bottomSheet.classList.add('activo');
 }
 
 
