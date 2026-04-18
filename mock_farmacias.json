@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "lat": -0.2145,
+        "lon": -78.3980,
+        "tags": {
+            "name": "Farmacia SanaSana Tumbaco",
+            "phone": "0991234567",
+            "opening_hours": "08:00-22:00"
+        }
+    },
+    {
+        "id": 2,
+        "lat": -0.2120,
+        "lon": -78.4010,
+        "tags": {
+            "name": "Farmacia Cruz Azul (Centro)",
+            "phone": "022345678",
+            "opening_hours": "24/7"
+        }
+    },
+    {
+        "id": 3,
+        "lat": -0.2160,
+        "lon": -78.3950,
+        "tags": {
+            "name": "Farmacia Comunitaria Doña Rosita",
+            "contact:phone": "+593 98 765 4321",
+            "opening_hours": "Mo-Fr 08:00-20:00"
+        }
+    }
+]

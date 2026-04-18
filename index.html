@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmLocator Tumbaco</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Modal Permiso GPS -->
+    <div id="modal-gps" class="modal-overlay" role="dialog" aria-labelledby="gps-title" aria-modal="true">
+        <div class="modal-content">
+            <h2 id="gps-title">Activar GPS</h2>
+            <p>Para mostrarte las farmacias más cercanas, necesitamos acceder a tu ubicación.</p>
+            <button id="btn-activar-gps" class="btn-primary skeleton" disabled>Activar GPS</button>
+        </div>
+    </div>
+
+
+    <div id="loading-overlay" class="oculto" role="alert" aria-live="assertive" aria-busy="true">
+        <div class="loading-ring" aria-hidden="true"></div>
+        <div class="loading-text">
+            <h2>Ubicando farmacias...</h2>
+            <p>Escaneando radio de 2.0km. Por favor, espere.</p>
+        </div>
+    </div>
+
+    <h1 class="sr-only" aria-hidden="true">FarmLocator Tumbaco - Radar de Emergencia</h1>
+
+    <div id="brand-watermark" aria-hidden="true">
+        FarmLocator <strong>Tumbaco</strong>
+    </div>
+
+    <main>
+        <section id="map" aria-label="Mapa interactivo de farmacias en Tumbaco" role="application"></section>
+    </main>
+
+    <!-- Botón Recentrar -->
+    <button class="btn-recenter" id="btn-recenter" aria-label="Centrar mapa en mi ubicación">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+        </svg>
+    </button>
+
+    <section id="bottom-sheet" aria-modal="true" role="dialog">
+        <div id="btn-cerrar-bs"
+            style="width: 50px; height: 5px; background: #ccc; border-radius: 10px; margin: 0 auto 10px; cursor: pointer;">
+        </div>
+
+        <div class="info-farmacia">
+            <h2 id="bs-nombre">Cargando...</h2>
+            <p id="bs-estado" style="font-weight: bold; margin: 5px 0;"></p>
+            <p id="bs-distancia"></p>
+            <p id="bs-horario"></p>
+            <small style="color: #666; font-style: italic;">Horario referencial: Sujeto a disponibilidad.</small>
+        </div>
+
+        <div class="acciones-contenedor" style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-contacto" class="btn-accion">
+                <span id="icon-container"></span>
+                <span id="text-contacto">Contactar</span>
+            </button>
+
+            <button id="btn-navegar" class="btn-accion" style="background-color: var(--color-azul-rey);">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
+                <span>Ir Ahora</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Botón Estado Vacío (Heurística 9) -->
+    <button id="btn-expandir-5km" class="btn-expandir oculto" aria-label="Expandir búsqueda a 5 kilómetros">
+        Buscar a 5km
+    </button>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
