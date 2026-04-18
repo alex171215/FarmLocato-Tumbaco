@@ -94,12 +94,25 @@ function mostrarBottomSheet(farmacia) {
     document.getElementById('bs-distancia').textContent = "Distancia radial: Aprox. " + distanciaCalculada + " m";
 
     // 2. Renderizado Condicional del Horario (Heurística 8)
+    const contenedorHorario = document.getElementById('contenedor-horario');
+    const elemEstado = document.getElementById('bs-estado');
     const elemHorario = document.getElementById('bs-horario');
+
     if (tags.opening_hours) {
-        elemHorario.textContent = "Horario: " + tags.opening_hours;
-        elemHorario.style.display = 'block'; // Lo mostramos si existe
+        contenedorHorario.style.display = 'block'; // Mostramos todo el bloque
+
+        if (tags.opening_hours === "24/7") {
+            elemEstado.textContent = "Abierto 24h";
+            elemEstado.style.color = "var(--color-verde-whatsapp)";
+            elemHorario.style.display = 'none'; // Ocultamos el string "24/7" redundante
+        } else {
+            elemEstado.textContent = "";
+            elemHorario.style.display = 'block';
+            elemHorario.textContent = "Horario: " + tags.opening_hours;
+        }
     } else {
-        elemHorario.style.display = 'none';  // Lo ocultamos por completo si no hay dato
+        // Si no hay dato, ocultamos estado, horario y microcopy de un solo golpe
+        contenedorHorario.style.display = 'none';
     }
 
     // 3. Renderizado del Contacto (Celular vs Fijo)
