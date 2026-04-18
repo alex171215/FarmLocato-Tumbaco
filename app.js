@@ -64,10 +64,10 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radio de la Tierra en km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
 
@@ -88,9 +88,11 @@ function mostrarBottomSheet(farmacia) {
     // 1. Inyectar Nombre y Distancia (H2 y H6)
     document.getElementById('bs-nombre').textContent = tags.name || "Farmacia sin nombre";
 
-    // Calculamos distancia (suponiendo que tienes la ubicación del usuario)
-    // Por ahora usamos un placeholder coherente con nuestra H2
-    document.getElementById('bs-distancia').textContent = `Distancia radial: Aprox. 450 m`;
+    // Calculamos distancia real usando map.distance (Leaflet)
+    const latlngUsuario = L.latLng(ubicacionActiva[0], ubicacionActiva[1]);
+    const latlngFarmacia = L.latLng(farmacia.lat, farmacia.lon);
+    const distanciaCalculada = Math.round(map.distance(latlngUsuario, latlngFarmacia));
+    document.getElementById('bs-distancia').textContent = "Distancia radial: Aprox. " + distanciaCalculada + " m";
 
     // 2. Lógica de Estado Abierto/Cerrado
     const estadoElemento = document.getElementById('bs-estado');
@@ -118,7 +120,7 @@ function mostrarBottomSheet(farmacia) {
         btnContacto.style.display = 'none';
     } else {
         btnContacto.style.display = ''; // Revertir a default (flex/block)
-        
+
         if (esCelular) {
             // Es celular -> WhatsApp
             btnContacto.innerHTML = `${whatsappSVG}<span>Enviar mensaje por WhatsApp</span>`;
@@ -145,96 +147,124 @@ function mostrarBottomSheet(farmacia) {
 
 
 
-// Función Asíncrona (ES6+) para consumir datos
-async function fetchFarmacias(radio = 2000) {
+// Función Asíncrona (ES6+) para consumir datos blindada contra latencia
+async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
+    let huboError = false;
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.classList.remove('oculto');
 
-    // Limpiar marcadores anteriores para no duplicarlos (Prevenir Duplicados)
-    markersGroup.clearLayers();
+    // Limpiar marcadores
+    if (typeof markersGroup !== 'undefined') markersGroup.clearLayers();
 
     let farmacias = [];
     let usóCache = false;
-    const cacheKey = `farmacias_tumbaco_cache_${radio}`;
 
-    // Paso A: Verificar caché en LocalStorage
-    const cacheData = localStorage.getItem(cacheKey);
-    if (cacheData) {
-        try {
-            const parsed = JSON.parse(cacheData);
-            const age = Date.now() - parsed.timestamp;
-            if (age < 24 * 60 * 60 * 1000) { // 24 horas
-                farmacias = parsed.data;
+    // Paso A: Caché
+    if (!forzarOverpass) {
+        const cacheData = localStorage.getItem('farmacias_tumbaco_cache');
+        if (cacheData) {
+            try {
+                farmacias = JSON.parse(cacheData);
                 usóCache = true;
+            } catch (e) {
+                console.warn("Caché corrupto, recargando...");
             }
-        } catch (e) {
-            console.warn("Caché corrupto, se forzará descarga de red");
         }
     }
 
     if (usóCache) {
-        // Paso B: Caché válido, ocultamos el overlay inmediatamente sin peticiones
-        if (overlay) overlay.classList.add('oculto');
+        if (overlay && !huboError) overlay.classList.add('oculto');
     } else {
-        // Paso C: No hay caché o expiró, procedemos con el Circuit Breaker y Fetch
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos max
 
         try {
-            // Consulta dinámica para Overpass API optimizada con 'out qt;'
-            const query = `[out:json];node["amenity"="pharmacy"](around:${radio},${ubicacionActiva[0]},${ubicacionActiva[1]});out qt;`;
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-            const response = await fetch(url, { signal: controller.signal });
+            // SALVAVIDAS CRÍTICO: Evita enviar variables 'undefined' que rompen la API
+            const lat = (typeof ubicacionActiva !== 'undefined' && ubicacionActiva[0]) ? ubicacionActiva[0] : -0.2135;
+            const lng = (typeof ubicacionActiva !== 'undefined' && ubicacionActiva[1]) ? ubicacionActiva[1] : -78.4025;
+
+            // Query optimizada con timeout interno de 5s
+            const query = `[out:json][timeout:5];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
+
+            // SOLUCIÓN DE RED: Usamos el espejo de alta velocidad (lz4) y método POST
+            const response = await fetch('https://lz4.overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: "data=" + encodeURIComponent(query),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                signal: controller.signal
+            });
+
             clearTimeout(timeoutId);
 
-            if (!response.ok) throw new Error('Error al conectar con la base de datos de Overpass');
+            if (!response.ok) throw new Error('Servidor Overpass rechazó la conexión');
 
             const data = await response.json();
             farmacias = data.elements || [];
 
-            // Guardamos el arreglo en LocalStorage junto con el timestamp actual
-            localStorage.setItem(cacheKey, JSON.stringify({
-                timestamp: Date.now(),
-                data: farmacias
-            }));
+            if (farmacias.length > 0) {
+                localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
+            }
 
         } catch (error) {
-            console.error("Fallo crítico:", error);
-            alert("No fue posible conectar con el servidor de mapas. Revisa tu conexión a internet.");
-            if (overlay) overlay.classList.add('oculto');
-            return; // Detenemos la ejecución
+            console.error("Fallo crítico de red:", error);
+            huboError = true;
+            if (overlay) {
+                // UI de Error intacta
+                overlay.innerHTML = `
+                    <div class="loading-text" style="text-align: center; color: white;">
+                        <h2 style="color: #ff4d4d; margin-bottom: 10px;">Error de Conexión</h2>
+                        <p style="margin-bottom: 20px;">No fue posible conectar con el servidor de mapas. Revisa tu conexión a internet.</p>
+                        <button id="btn-reintentar" class="btn-primary" style="background-color: #dc3545; padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer;">Reintentar</button>
+                    </div>
+                `;
+
+                // Reintento sin recargar la página
+                document.getElementById('btn-reintentar').onclick = () => {
+                    overlay.innerHTML = `
+                        <div class="loading-ring" aria-hidden="true"></div>
+                        <div class="loading-text">
+                            <h2>Ubicando farmacias...</h2>
+                            <p>Escaneando radio de ${radio / 1000}km. Por favor, espere.</p>
+                        </div>
+                    `;
+                    fetchFarmacias(radio, forzarOverpass);
+                };
+            }
+            return;
         } finally {
-            if (overlay) overlay.classList.add('oculto');
+            if (overlay && !huboError) {
+                overlay.classList.add('oculto');
+            }
         }
     }
 
-    // Verificamos el Empty State (Heurística 9)
-    if (farmacias.length === 0) {
+    if (farmacias.length === 0 && !huboError) {
         alert(`No se encontraron farmacias a ${radio / 1000}km.`);
-        document.getElementById('btn-expandir-5km').classList.remove('oculto');
+        const btn5km = document.getElementById('btn-expandir-5km');
+        if (btn5km) btn5km.classList.remove('oculto');
         return;
     }
 
-    // Renderizamos los pines en el mapa
     farmacias.forEach(farmacia => {
         const lat = farmacia.lat;
         const lon = farmacia.lon;
-        const nombre = farmacia.tags && farmacia.tags.name ? farmacia.tags.name : "Farmacia sin nombre";
 
-        // Creamos el marcador y lo añadimos al grupo (no directo al mapa)
-        const marker = L.marker([lat, lon], { icon: iconoFarmacia }).addTo(markersGroup);
+        if (typeof markersGroup !== 'undefined') {
+            const marker = L.marker([lat, lon], { icon: iconoFarmacia }).addTo(markersGroup);
 
-        marker.on('click', (e) => {
-            L.DomEvent.stopPropagation(e); // H3: Evita que el clic se propague al mapa
-            
-            // H6: Feedback visual de selección
-            document.querySelectorAll('.pin-medico').forEach(pin => pin.classList.remove('pin-activo'));
-            marker.getElement().querySelector('.pin-medico').classList.add('pin-activo');
-
-            // Mostrar tarjeta y elevar Z-Index
-            mostrarBottomSheet(farmacia);
-            marker.setZIndexOffset(1000);
-        });
+            marker.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                document.querySelectorAll('.pin-medico').forEach(pin => pin.classList.remove('pin-activo'));
+                if (marker.getElement()) {
+                    const pin = marker.getElement().querySelector('.pin-medico');
+                    if (pin) pin.classList.add('pin-activo');
+                }
+                if (typeof mostrarBottomSheet === 'function') mostrarBottomSheet(farmacia);
+                marker.setZIndexOffset(1000);
+            });
+        }
     });
 }
 
@@ -270,7 +300,7 @@ window.addEventListener('load', () => {
 
                 if (estaBuscando) {
                     estaBuscando = false;
-                    
+
                     const distancia = calcularDistancia(lat, lng, centroTumbaco[0], centroTumbaco[1]);
 
                     if (distancia > 5) {
@@ -303,7 +333,7 @@ window.addEventListener('load', () => {
             },
             {
                 maximumAge: 10000,
-                timeout: 10000, 
+                timeout: 10000,
                 enableHighAccuracy: true
             }
         );
@@ -329,11 +359,16 @@ window.addEventListener('load', () => {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
             const overlayText = overlay.querySelector('p');
-            overlayText.textContent = "Ampliando radio de búsqueda a 5km. Por favor, espere...";
+            overlayText.textContent = "Ampliando radio de búsqueda a 5km...";
             overlay.classList.remove('oculto');
         }
+
+        // Limpiar la capa de pines de farmacias actual
+        markersGroup.clearLayers();
+
         btn.classList.add('oculto');
-        fetchFarmacias(5000); 
+        // Llamar a fetchFarmacias(5000) forzando la petición a Overpass (ignorando el caché de 2km)
+        fetchFarmacias(5000, true);
     });
 
 });
