@@ -19,7 +19,25 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
-map.on('click', () => { bottomSheet.classList.remove('activo'); document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo')); });
+// Cierre al tocar el mapa
+map.on('click', () => {
+    bottomSheet.classList.remove('activo');
+    document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
+});
+
+// Cierre mediante Swipe Down (Deslizamiento)
+let startY = 0;
+bottomSheet.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+}, { passive: true });
+
+bottomSheet.addEventListener('touchmove', (e) => {
+    const currentY = e.touches[0].clientY;
+    if (currentY - startY > 40) { // Si desliza más de 40px hacia abajo
+        bottomSheet.classList.remove('activo');
+        document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
+    }
+}, { passive: true });
 
 // ==========================================
 // ÍCONOS
@@ -128,18 +146,15 @@ function mostrarBottomSheet(farmacia) {
         }
     }
 
-    // 4. Corrección de Enrutamiento (Google Maps Universal)
+    // Corrección URL de Google Maps Universal
     const btnNavegar = document.getElementById('btn-navegar');
     btnNavegar.onclick = () => {
-        // Enrutamiento OFICIAL y universal de Google Maps
-        // Toma ubicacionActiva (que será Tumbaco si deniegas o estás en la PUCE) como 'origin'
-        const latOrigen = ubicacionActiva[0];
-        const lngOrigen = ubicacionActiva[1];
-        const latDestino = farmacia.lat;
-        const lngDestino = farmacia.lon;
+        const latOrigen = parseFloat(ubicacionActiva[0]);
+        const lngOrigen = parseFloat(ubicacionActiva[1]);
+        const latDestino = parseFloat(farmacia.lat);
+        const lngDestino = parseFloat(farmacia.lon);
 
-        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}&travelmode=walking`;
-
+        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}`;
         window.open(urlGoogleMaps, '_blank');
     };
 
@@ -147,7 +162,7 @@ function mostrarBottomSheet(farmacia) {
 }
 
 // ==========================================
-// CONSULTA A LA API (Sin trampas, Fallo rápido, URL limpia)
+// CONSULTA A LA API
 // ==========================================
 async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
     const overlay = document.getElementById('loading-overlay');
@@ -167,7 +182,7 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
                 farmacias = JSON.parse(cache);
                 usóCache = true;
             } catch (e) {
-                console.error("Fallo de lectura en localStorage", e);
+                console.error("Fallo caché", e);
             }
         }
     }
@@ -193,12 +208,10 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
             const query = `[out:json][timeout:10];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
-            console.log("Consulta de Red:", url);
-
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
 
-            if (!response.ok) throw new Error(`Status Code: ${response.status}`);
+            if (!response.ok) throw new Error(`Status: ${response.status}`);
 
             const data = await response.json();
             farmacias = data.elements || [];
@@ -207,8 +220,7 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
                 localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             }
         } catch (error) {
-            console.error("Interrupción en la API de Overpass:", error.message);
-            mostrarAviso("Error de red. Reintente la búsqueda.");
+            mostrarAviso("Error de red o timeout. Reintente la búsqueda.");
         } finally {
             if (overlay) overlay.classList.add('oculto');
             estaBuscando = false;
@@ -236,47 +248,54 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
 }
 
 // ==========================================
-// GESTIÓN DE EVENTOS Y DETECTOR DE RED OFFLINE
+// GESTIÓN DE EVENTOS Y DETECTOR DE RED
 // ==========================================
+function iniciarMapa() {
+    // Esta función garantiza que el modal solo desaparezca cuando se tiene una respuesta
+    document.getElementById('modal-gps').style.display = 'none';
+    map.setView(ubicacionActiva, 15);
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker(ubicacionActiva, { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
+    fetchFarmacias();
+}
+
 window.addEventListener('load', () => {
     if (!btnGPS) return;
 
-    // Quitar skeleton
     btnGPS.classList.remove('skeleton');
 
-    // 1. EVALUACIÓN DE RED INICIAL (H5: Prevención de Errores)
     if (!navigator.onLine) {
         btnGPS.disabled = true;
         btnGPS.textContent = "Sin conexión a internet";
-        mostrarAviso("Se requiere conexión a internet para iniciar la búsqueda.");
-    } else {
-        btnGPS.removeAttribute('disabled');
     }
 
-    // 2. LISTENERS DE RED EN TIEMPO REAL
     window.addEventListener('offline', () => {
-        mostrarAviso("Se ha perdido la conexión a internet.");
         if (btnGPS) {
             btnGPS.disabled = true;
-            if (btnGPS.textContent === "Activar GPS") btnGPS.textContent = "Sin conexión a internet";
+            btnGPS.textContent = "Sin conexión a internet";
         }
     });
 
     window.addEventListener('online', () => {
-        mostrarAviso("Conexión restaurada.");
         if (btnGPS) {
             btnGPS.disabled = false;
-            if (btnGPS.textContent === "Sin conexión a internet") btnGPS.textContent = "Activar GPS";
+            btnGPS.textContent = "Activar GPS";
         }
     });
 
-    // 3. Lógica del botón de GPS (Corregido para PC - Sin Timeout)
     btnGPS.onclick = () => {
         if (estaBuscando) return;
         estaBuscando = true;
 
         btnGPS.textContent = "Solicitando permiso...";
         btnGPS.disabled = true;
+
+        if (!navigator.geolocation) {
+            mostrarAviso("Tu navegador no soporta GPS. Usando Tumbaco.");
+            ubicacionActiva = [...centroTumbaco];
+            iniciarMapa();
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -285,32 +304,22 @@ window.addEventListener('load', () => {
                 ubicacionActiva = [lat, lng];
 
                 if (calcularDistancia(lat, lng, centroTumbaco[0], centroTumbaco[1]) > 5) {
-                    mostrarAviso("Fuera de zona. Usando centro de Tumbaco.");
+                    mostrarAviso("Estás fuera de Tumbaco. Simulando ubicación en el centro.");
                     ubicacionActiva = [...centroTumbaco];
                 }
 
-                document.getElementById('modal-gps').style.display = 'none';
-                map.setView(ubicacionActiva, 15);
-                if (userMarker) map.removeLayer(userMarker);
-                userMarker = L.marker(ubicacionActiva, { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
-
-                fetchFarmacias();
+                iniciarMapa(); // Se llama estrictamente después de calcular coordenadas
             },
-            (error) => {
-                console.warn("Estado de Geolocalización:", error.message);
-                mostrarAviso("Permiso bloqueado por el navegador. Usando Tumbaco.");
+            () => {
+                mostrarAviso("Permiso de ubicación denegado. Usando centro de Tumbaco.");
                 ubicacionActiva = [...centroTumbaco];
 
-                document.getElementById('modal-gps').style.display = 'none';
-                map.setView(ubicacionActiva, 15);
-
-                fetchFarmacias();
+                iniciarMapa(); // Se llama estrictamente tras la denegación
             },
-            { enableHighAccuracy: true }
+            { enableHighAccuracy: true } // Se elimina timeout para evitar saltos prematuros
         );
     };
 
-    // Eventos secundarios
     const btnExpandir = document.getElementById('btn-expandir-5km');
     if (btnExpandir) {
         btnExpandir.onclick = () => {
