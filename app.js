@@ -126,9 +126,18 @@ function mostrarBottomSheet(farmacia) {
         elemContacto.style.display = 'none';
     }
 
+    // 4. Corrección de Enrutamiento (Google Maps Universal)
     const btnNavegar = document.getElementById('btn-navegar');
     btnNavegar.onclick = () => {
-        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=$$${ubicacionActiva[0]},${ubicacionActiva[1]}&destination=${farmacia.lat},${farmacia.lon}&travelmode=walking`;
+        // Siempre usamos ubicacionActiva (Real si están en Tumbaco, Simulada si están en la PUCE)
+        const latOrigen = ubicacionActiva[0];
+        const lngOrigen = ubicacionActiva[1];
+        const latDestino = farmacia.lat;
+        const lngDestino = farmacia.lon;
+
+        // URL Oficial de Google Maps Directions (Sin travelmode forzado para que Google decida si es auto o a pie)
+        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}`;
+
         window.open(urlGoogleMaps, '_blank');
     };
 
