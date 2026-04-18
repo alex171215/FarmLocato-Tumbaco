@@ -278,29 +278,30 @@ window.addEventListener('load', () => {
     btnGPS.removeAttribute('disabled');
     btnGPS.classList.remove('skeleton');
 
-    // 3. Activar GPS y Tracker (Evita clics perdidos)
+    // 3. Activar GPS y Tracker (Evita clics perdidos y soluciona Race Condition)
     btnGPS.onclick = () => {
         if (estaBuscando) return;
-
         estaBuscando = true;
-        btnGPS.disabled = true; // Desactivamos el botón visualmente
 
-        // a) Feedback INMEDIATO
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) overlay.classList.remove('oculto');
+        // 1. Feedback en el botón (Esperando que el usuario responda al navegador)
+        const textoOriginal = btnGPS.textContent;
+        btnGPS.textContent = "Solicitando permiso...";
+        btnGPS.disabled = true;
 
-        // b) Ocultar modal GPS directamente sin transición que lo atranque
-        const modal = document.getElementById('modal-gps');
-        if (modal) modal.style.display = 'none';
+        let primerLlamado = true; // Bandera para controlar el flujo inicial
 
-        // c) Disparar geolocalización
+        // 2. Disparar geolocalización (El navegador pausa aquí para mostrar su alerta nativa)
         watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
 
-                if (estaBuscando) {
-                    estaBuscando = false;
+                if (primerLlamado) {
+                    primerLlamado = false;
+
+                    // 3. AHORA SÍ: El usuario dio "Permitir". Ocultamos modal.
+                    const modal = document.getElementById('modal-gps');
+                    if (modal) modal.style.display = 'none';
 
                     const distancia = calcularDistancia(lat, lng, centroTumbaco[0], centroTumbaco[1]);
 
@@ -316,20 +317,29 @@ window.addEventListener('load', () => {
                     if (userMarker) map.removeLayer(userMarker);
                     userMarker = L.marker([lat, lng], { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
 
-                    // Llama a api
+                    // 4. Invocamos la búsqueda (fetchFarmacias mostrará el spinner)
                     fetchFarmacias();
                 } else {
-                    if (userMarker) {
-                        userMarker.setLatLng([lat, lng]);
-                    }
+                    // Actualizaciones de radar en tiempo real
+                    if (userMarker) userMarker.setLatLng([lat, lng]);
                 }
             },
             (error) => {
-                if (!estaBuscando) return;
+                if (!primerLlamado) return;
+                primerLlamado = false;
                 estaBuscando = false;
 
+                // 3B. ERROR o DENEGADO: Restauramos botón
+                btnGPS.textContent = textoOriginal;
+                btnGPS.disabled = false;
+
                 alert("Permiso de ubicación denegado. Mostrando el centro de Tumbaco por defecto.");
-                map.setView([-0.2135, -78.4025], 15);
+
+                const modal = document.getElementById('modal-gps');
+                if (modal) modal.style.display = 'none';
+
+                ubicacionActiva = [-0.2135, -78.4025];
+                map.setView(ubicacionActiva, 15);
                 fetchFarmacias();
             },
             {
