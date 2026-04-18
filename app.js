@@ -153,6 +153,7 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
         overlay.innerHTML = `<div class="loading-ring"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km.</p></div>`;
+        overlay.classList.remove('oculto');
     }
 
     markersGroup.clearLayers();
@@ -165,7 +166,9 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
             try {
                 farmacias = JSON.parse(cache);
                 usóCache = true;
-            } catch (e) { }
+            } catch (e) {
+                console.error("Fallo de lectura en localStorage", e);
+            }
         }
     }
 
@@ -173,28 +176,29 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
         if (overlay) overlay.classList.add('oculto');
         estaBuscando = false;
     } else {
-        // Validación de red antes de intentar
         if (!navigator.onLine) {
             if (overlay) overlay.classList.add('oculto');
-            mostrarAviso("Sin conexión a internet. No se pueden descargar datos.");
+            mostrarAviso("Sin conexión a internet.");
             estaBuscando = false;
             return;
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos max
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         try {
-            // SINTAXIS EXACTA REQUERIDA
-            const lat = ubicacionActiva[0];
-            const lng = ubicacionActiva[1];
-            const query = `[out:json][timeout:8];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
+            const lat = parseFloat(ubicacionActiva[0]);
+            const lng = parseFloat(ubicacionActiva[1]);
+
+            const query = `[out:json][timeout:10];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+            console.log("Consulta de Red:", url);
 
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
 
-            if (!response.ok) throw new Error('Error en el servidor');
+            if (!response.ok) throw new Error(`Status Code: ${response.status}`);
 
             const data = await response.json();
             farmacias = data.elements || [];
@@ -203,9 +207,8 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
                 localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             }
         } catch (error) {
-            // Cero trampas. Si falla, avisamos y salimos.
-            console.error("Fallo de red:", error);
-            mostrarAviso("Servidor no disponible. Por favor, reintenta más tarde.");
+            console.error("Interrupción en la API de Overpass:", error.message);
+            mostrarAviso("Error de red. Reintente la búsqueda.");
         } finally {
             if (overlay) overlay.classList.add('oculto');
             estaBuscando = false;
@@ -213,7 +216,7 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
     }
 
     if (farmacias.length === 0 && navigator.onLine) {
-        mostrarAviso("No hay farmacias en este radio.");
+        mostrarAviso("Área sin resultados disponibles.");
         const btn5km = document.getElementById('btn-expandir-5km');
         if (btn5km) btn5km.classList.remove('oculto');
         return;
@@ -275,17 +278,17 @@ window.addEventListener('load', () => {
         btnGPS.textContent = "Solicitando permiso...";
         btnGPS.disabled = true;
 
-        // Opciones SIN timeout para que espere al navegador de la PC el tiempo que sea necesario
-        const opcionesGPS = { enableHighAccuracy: true, maximumAge: 0 };
-
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                ubicacionActiva = [position.coords.latitude, position.coords.longitude];
-                // Si está en la PUCE (>5km), lo forzamos a Tumbaco
-                if (calcularDistancia(ubicacionActiva[0], ubicacionActiva[1], centroTumbaco[0], centroTumbaco[1]) > 5) {
+                const lat = parseFloat(position.coords.latitude);
+                const lng = parseFloat(position.coords.longitude);
+                ubicacionActiva = [lat, lng];
+
+                if (calcularDistancia(lat, lng, centroTumbaco[0], centroTumbaco[1]) > 5) {
                     mostrarAviso("Fuera de zona. Usando centro de Tumbaco.");
-                    ubicacionActiva = centroTumbaco;
+                    ubicacionActiva = [...centroTumbaco];
                 }
+
                 document.getElementById('modal-gps').style.display = 'none';
                 map.setView(ubicacionActiva, 15);
                 if (userMarker) map.removeLayer(userMarker);
@@ -293,15 +296,17 @@ window.addEventListener('load', () => {
 
                 fetchFarmacias();
             },
-            () => {
-                mostrarAviso("Permiso denegado. Usando centro de Tumbaco.");
-                ubicacionActiva = centroTumbaco; // Se asigna Tumbaco como origen
+            (error) => {
+                console.warn("Estado de Geolocalización:", error.message);
+                mostrarAviso("Permiso bloqueado por el navegador. Usando Tumbaco.");
+                ubicacionActiva = [...centroTumbaco];
+
                 document.getElementById('modal-gps').style.display = 'none';
                 map.setView(ubicacionActiva, 15);
 
                 fetchFarmacias();
             },
-            opcionesGPS
+            { enableHighAccuracy: true }
         );
     };
 
