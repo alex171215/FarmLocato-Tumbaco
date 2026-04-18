@@ -19,6 +19,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
+map.on('click', () => { bottomSheet.classList.remove('activo'); document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo')); });
+
 // ==========================================
 // ÍCONOS
 // ==========================================
@@ -105,7 +107,9 @@ function mostrarBottomSheet(farmacia) {
     const txtContacto = document.getElementById('text-contacto');
     let telefono = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || "";
 
-    if (telefono) {
+    if (!telefono) {
+        elemContacto.style.display = 'none';
+    } else {
         elemContacto.style.display = 'flex';
         let telLimpio = telefono.replace(/[\s\-\(\)]/g, '');
 
@@ -122,8 +126,6 @@ function mostrarBottomSheet(farmacia) {
                 window.open(`tel:${telLimpio}`, '_self');
             };
         }
-    } else {
-        elemContacto.style.display = 'none';
     }
 
     // 4. Corrección de Enrutamiento (Google Maps Universal)
@@ -151,7 +153,6 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
         overlay.innerHTML = `<div class="loading-ring"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km.</p></div>`;
-        overlay.classList.remove('oculto');
     }
 
     markersGroup.clearLayers();
@@ -184,8 +185,10 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos max
 
         try {
-            // SINTAXIS CORRECTA SIN < >
-            const query = `[out:json][timeout:8];node["amenity"="pharmacy"](around:${radio},${ubicacionActiva[0]},${ubicacionActiva[1]});out qt;`;
+            // SINTAXIS EXACTA REQUERIDA
+            const lat = ubicacionActiva[0];
+            const lng = ubicacionActiva[1];
+            const query = `[out:json][timeout:8];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             const response = await fetch(url, { signal: controller.signal });
@@ -274,6 +277,9 @@ window.addEventListener('load', () => {
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.classList.remove('oculto');
+
                 ubicacionActiva = [position.coords.latitude, position.coords.longitude];
                 if (calcularDistancia(ubicacionActiva[0], ubicacionActiva[1], centroTumbaco[0], centroTumbaco[1]) > 5) {
                     mostrarAviso("Fuera de zona. Usando centro de Tumbaco.");
@@ -287,6 +293,9 @@ window.addEventListener('load', () => {
                 fetchFarmacias();
             },
             () => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.classList.remove('oculto');
+
                 mostrarAviso("Permiso denegado. Usando centro de Tumbaco.");
                 ubicacionActiva = centroTumbaco;
                 document.getElementById('modal-gps').style.display = 'none';
@@ -303,6 +312,8 @@ window.addEventListener('load', () => {
     if (btnExpandir) {
         btnExpandir.onclick = () => {
             btnExpandir.classList.add('oculto');
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.remove('oculto');
             fetchFarmacias(5000, true);
         };
     }
