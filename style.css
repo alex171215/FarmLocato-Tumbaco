@@ -1,0 +1,493 @@
+:root {
+    --color-gris-fondo: #E5E5E5;
+    --color-blanco: #FFFFFF;
+    --color-rojo-trafico: #bc0100;
+    --color-azul-rey: #0058bc;
+    --color-superficie: #1c1b1b;
+    --color-superficie-variante: #603e39;
+    --color-fondo-overlay: rgba(252, 249, 248, 0.9);
+    --color-verde-whatsapp: #25D366;
+    --color-gris-oscuro: #333333;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ACCESIBILIDAD: Oculto para vista pero disponible para Screen Readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Evita interferir con clics en la UI */
+}
+
+body,
+html {
+    height: 100%;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    background-color: var(--color-gris-fondo);
+    overflow: hidden;
+    /* Bloquea el scroll de la página entera */
+}
+
+/* Contenedor del mapa: 100% de la pantalla siempre */
+#map {
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-gris-fondo);
+    z-index: 1;
+}
+
+/* LEY DE FIGURA-FONDO: Mapa en escala de grises */
+.leaflet-tile-pane {
+    filter: grayscale(100%) contrast(0.8);
+}
+
+
+/* =========================================
+   OVERLAY DE CARGA (H1)
+========================================= */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-fondo-overlay);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+    pointer-events: auto; /* Asegurar interceptación mientras es visible */
+    transition: opacity 0.5s ease;
+    gap: 3rem;
+    text-align: center;
+}
+
+.loading-ring {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    border: 0.125rem solid transparent;
+    border-top-color: var(--color-rojo-trafico);
+    animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-ring::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 50%;
+    border: 0.125rem solid var(--color-azul-rey);
+    opacity: 0.1;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-superficie);
+    margin-bottom: 0.5rem;
+}
+
+.loading-text p {
+    font-size: 0.875rem;
+    color: var(--color-superficie-variante);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+/* Ocultar overlay mediante clase */
+.oculto {
+    opacity: 0;
+    pointer-events: none !important;
+    visibility: hidden;
+}
+
+/* =========================================
+   PIN MÉDICO PRO (Accesibilidad + Estética)
+========================================= */
+.pin-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pin-medico {
+    width: 3rem;
+    /* Actualización para Fitts Law si queremos 48px, o 2.18rem (35px) /* Dejamos a 3rem (48px) para mobile */
+    height: 3rem;
+    background-color: var(--color-rojo-trafico);
+    border: 0.15rem solid #000000;
+    /* Contorno negro puro para máxima visibilidad */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease;
+    /* Feedback visual suave */
+}
+
+/* La cruz blanca usando pseudo-elementos para que se vea perfecta */
+.pin-medico::before,
+.pin-medico::after {
+    content: '';
+    position: absolute;
+    background-color: white;
+}
+
+/* Línea horizontal de la cruz */
+.pin-medico::before {
+    width: 1.5rem;
+    height: 0.35rem;
+}
+
+/* Línea vertical de la cruz */
+.pin-medico::after {
+    width: 0.35rem;
+    height: 1.5rem;
+}
+
+/* Efecto al tocar el pin (H6: Feedback) */
+.pin-medico:active,
+.pin-activo {
+    transform: scale(1.3);
+    background-color: #FF0000;
+    /* Un rojo más brillante al tocar */
+    border-color: var(--color-azul-rey);
+}
+
+/* =========================================
+   BOTTOM SHEET - ARQUITECTURA RESPONSIVA
+========================================= */
+#bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* Mobile First: ancho total */
+    background-color: var(--color-blanco);
+    z-index: 10000;
+    border-radius: 1.25rem 1.25rem 0 0;
+    /* Solo bordes superiores */
+    box-shadow: 0 -0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+
+    /* ESTADO INICIAL: Escondido debajo de la pantalla */
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+/* Estado cuando se hace clic en un pin */
+#bottom-sheet.activo {
+    transform: translateY(0);
+}
+
+/* Diseño para Desktop (PC) */
+@media (min-width: 768px) {
+    #bottom-sheet {
+        left: 1.5rem;
+        bottom: 1.5rem;
+        width: 380px;
+        border-radius: 1rem;
+        transform: translateY(150%);
+        /* Se oculta un poco más lejos en PC */
+    }
+}
+
+/* Estilos de los botones con iconos */
+.btn-accion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    /* Espacio entre icono y texto */
+    height: 3.5rem;
+    /* Asegura los 56px para Ley de Fitts */
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    font-size: 1rem;
+}
+
+.icon-svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: currentColor;
+    /* El icono toma el color del texto */
+}
+
+/* =========================================
+   MARKER USUARIO
+========================================= */
+.user-marker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-pulse {
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    background-color: var(--color-azul-rey);
+    border-radius: 50%;
+    opacity: 0.2;
+    box-shadow: 0 0 0 0 rgba(0, 88, 188, 0.4);
+    animation: userPulseAnim 2s infinite;
+}
+
+.user-dot {
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--color-azul-rey);
+    border: 0.125rem solid var(--color-blanco);
+    border-radius: 50%;
+    z-index: 20;
+}
+
+@keyframes userPulseAnim {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 88, 188, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 1.25rem rgba(0, 88, 188, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 88, 188, 0);
+    }
+}
+
+/* =========================================
+   BOTÓN RECENTRAR 
+========================================= */
+.btn-recenter {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    /* 20px mobile aprox */
+    width: 3rem;
+    /* 48px Fitts Law */
+    height: 3rem;
+    /* 48px Fitts Law */
+    background-color: var(--color-blanco);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9998;
+    transition: transform 0.2s ease;
+}
+
+.btn-recenter:active {
+    transform: scale(0.95);
+}
+
+.btn-recenter svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: var(--color-superficie);
+}
+
+/* RESPONSIVITY: Desktop (min-width: 768px) */
+@media (min-width: 768px) {
+    .bottom-sheet {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        width: 25rem;
+        /* 400px floating card */
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(27, 28, 28, 0.15);
+    }
+
+    .bs-drag-handle {
+        display: none;
+        /* Hide drag handle on desktop */
+    }
+
+    .btn-recenter {
+        bottom: 2rem;
+        right: 2rem;
+    }
+}
+
+/* =========================================
+   MARCA DE AGUA FLOTANTE (Branding)
+========================================= */
+#brand-watermark {
+    position: fixed;
+    top: 1rem;
+    /* Margen superior */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Centrado perfecto */
+    background-color: var(--color-fondo-overlay);
+    /* Un fondo semitransparente */
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    /* Estilo píldora */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 0.85rem;
+    color: var(--color-superficie);
+    z-index: 9998;
+    /* Sobre el mapa, bajo el overlay de carga */
+    pointer-events: none;
+    /* CRÍTICO: Permite que los toques traspasen el título y muevan el mapa */
+}
+
+/* =========================================
+   MODAL PERMISO GPS (Geolocalización)
+========================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-blanco); /* H1: Opacidad Total */
+    z-index: 10001; /* Sobre todo */
+    display: flex;
+    pointer-events: auto; /* Asegurar que capture toques antes de inicializarse el mapa */
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem;
+    transition: opacity 0.5s ease;
+}
+
+.modal-oculto {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.modal-content {
+    background-color: var(--color-blanco);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+    font-size: 1.5rem;
+    color: var(--color-superficie);
+    margin-bottom: 1rem;
+}
+
+.modal-content p {
+    font-size: 1rem;
+    color: var(--color-superficie-variante);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+#btn-activar-gps {
+    width: 100%;
+    min-height: 3.5rem; /* 56px Fitts Law */
+    background-color: var(--color-azul-rey);
+    color: var(--color-blanco);
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#btn-activar-gps:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+#btn-activar-gps:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* =========================================
+   SKELETON SHIMMER CSS
+========================================= */
+.skeleton {
+    background: linear-gradient(90deg, #bbbbbb 25%, #e0e0e0 50%, #bbbbbb 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    color: transparent !important;
+    pointer-events: none;
+    border: none;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* =========================================
+   BOTÓN EXPANSIÓN 5KM (Heurística 9)
+========================================= */
+.btn-expandir {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-azul-rey);
+    color: var(--color-blanco);
+    border: none;
+    border-radius: 2rem; /* Pill shape */
+    padding: 0.5rem 2rem;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 9999;
+    min-height: 2.75rem; /* 44px Fitts Law */
+    transition: transform 0.2s ease, opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-expandir:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+.btn-expandir.oculto {
+    display: none;
+}

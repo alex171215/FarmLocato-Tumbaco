@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#1c1b1b",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed-variant": "#00531c",
+                        "tertiary-fixed": "#72fe88",
+                        "on-secondary-fixed": "#001a41",
+                        "on-primary-fixed-variant": "#930100",
+                        "primary-fixed": "#ffdad4",
+                        "surface-container-high": "#eae7e7",
+                        "outline-variant": "#ebbbb4",
+                        "tertiary": "#006b27",
+                        "surface-container": "#f0eded",
+                        "on-tertiary-container": "#f7fff2",
+                        "on-surface-variant": "#603e39",
+                        "on-background": "#1c1b1b",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#004493",
+                        "inverse-primary": "#ffb4a8",
+                        "inverse-on-surface": "#f3f0ef",
+                        "tertiary-fixed-dim": "#53e16f",
+                        "on-primary-fixed": "#410000",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#bc0100",
+                        "secondary": "#0058bc",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "outline": "#956d67",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-container": "#fefcff",
+                        "on-error": "#ffffff",
+                        "primary-container": "#eb0000",
+                        "surface-dim": "#dcd9d9",
+                        "error-container": "#ffdad6",
+                        "background": "#fcf9f8",
+                        "inverse-surface": "#313030",
+                        "surface": "#fcf9f8",
+                        "surface-bright": "#fcf9f8",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#c00100",
+                        "on-tertiary-fixed": "#002107",
+                        "tertiary-container": "#008733",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e5e2e1",
+                        "secondary-container": "#0070eb",
+                        "surface-container-low": "#f6f3f2",
+                        "on-primary-container": "#fffbff",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .loading-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #bc0100;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            position: relative;
+        }
+        .loading-ring::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px solid #0058bc;
+            opacity: 0.1;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .pulse-soft {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface overflow-hidden">
+<!-- Suppressed Navigation: The "Destination" Rule / Transactional State -->
+<!-- As this is a loading overlay for a specific task (locating), the shell is suppressed to prioritize content canvas. -->
+<main class="relative flex flex-col items-center justify-center min-h-screen w-full px-6">
+<!-- Radar Map Background (Faded/Blured for context) -->
+<div class="absolute inset-0 z-0 opacity-20 grayscale pointer-events-none">
+<div class="w-full h-full bg-cover bg-center" data-alt="Grayscale top-down aerial map of a suburban landscape with clean minimalist grid lines and high contrast urban details" data-location="Tumbaco" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDbvoGZp7msy-v97fJqo66kHkhNYOK2thuhr6tKrA76Jzup_Prxoi-mpX2oBPia2eZ-15qHAt2lYolaA2sFlDkkU2rbq6VrdFH7fpAYHN8ZodkDUa7fIM1wNkfai3-vh-7P10_rDifTIksGLQT-R2sWqb7BcdqeK-drvoMcnas6nE5xd2Og3DOqTF089ncEtDqKcG45ISeBFalE06kxDV6kaWuqQyPMPFMCZh0jPH-Ij4GfMo-5x2Bev2R8W1t5NICrp4C4wdLqQVD9')"></div>
+<div class="absolute inset-0 bg-background/60 backdrop-blur-3xl"></div>
+</div>
+<!-- Central Loading Component -->
+<div class="relative z-10 flex flex-col items-center text-center space-y-12">
+<!-- Branding Anchor -->
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="emergency" style="font-variation-settings: 'FILL' 1;">emergency</span>
+<h1 class="font-headline font-black tracking-tighter uppercase text-on-surface text-xl">
+                    FarmLocator Tumbaco
+                </h1>
+</div>
+<!-- The Spinner -->
+<div class="relative flex items-center justify-center">
+<div class="loading-ring"></div>
+<!-- Inner medical cross anchor -->
+<div class="absolute text-primary pulse-soft">
+<span class="material-symbols-outlined text-2xl" data-icon="health_and_safety" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+</div>
+</div>
+<!-- Descriptive Text -->
+<div class="space-y-4">
+<h2 class="text-2xl md:text-3xl font-headline font-bold tracking-tight text-on-surface">
+                    Locating nearest pharmacy...
+                </h2>
+<div class="flex flex-col items-center space-y-1">
+<p class="text-sm font-label tracking-tight text-on-surface-variant uppercase opacity-60">
+                        Scanning 5.0km radius
+                    </p>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<p class="text-xs font-label text-on-surface-variant">Live satellite data connection</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Asymmetric Detail: High-End Editorial Style -->
+<div class="absolute bottom-12 left-12 hidden md:block">
+<div class="flex flex-col gap-1 border-l-2 border-primary pl-4">
+<span class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Protocol 4-Alpha</span>
+<span class="text-xs font-medium text-on-surface-variant">GPS precision: 2.4 meters</span>
+</div>
+</div>
+<div class="absolute top-12 right-12 hidden md:block">
+<div class="text-right">
+<p class="text-[40px] font-black tracking-tighter text-on-surface leading-none">0.0<span class="text-primary text-2xl">%</span></p>
+<p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Signal Strength</p>
+</div>
+</div>
+</main>
+<!-- Visual Hint: Progress Bar (Ghost Border style) -->
+<div class="fixed bottom-0 left-0 w-full h-1.5 bg-surface-container">
+<div class="h-full bg-secondary w-1/3 transition-all duration-1000 ease-in-out"></div>
+</div>
+</body></html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FarmLocator Tumbaco - Radar View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#1c1b1b",
+                    "surface-container-highest": "#e5e2e1",
+                    "on-tertiary-fixed-variant": "#00531c",
+                    "tertiary-fixed": "#72fe88",
+                    "on-secondary-fixed": "#001a41",
+                    "on-primary-fixed-variant": "#930100",
+                    "primary-fixed": "#ffdad4",
+                    "surface-container-high": "#eae7e7",
+                    "outline-variant": "#ebbbb4",
+                    "tertiary": "#006b27",
+                    "surface-container": "#f0eded",
+                    "on-tertiary-container": "#f7fff2",
+                    "on-surface-variant": "#603e39",
+                    "on-background": "#1c1b1b",
+                    "error": "#ba1a1a",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#004493",
+                    "inverse-primary": "#ffb4a8",
+                    "inverse-on-surface": "#f3f0ef",
+                    "tertiary-fixed-dim": "#53e16f",
+                    "on-primary-fixed": "#410000",
+                    "primary-fixed-dim": "#ffb4a8",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#bc0100",
+                    "secondary": "#0058bc",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "outline": "#956d67",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-container": "#fefcff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#eb0000",
+                    "surface-dim": "#dcd9d9",
+                    "error-container": "#ffdad6",
+                    "background": "#fcf9f8",
+                    "inverse-surface": "#313030",
+                    "surface": "#fcf9f8",
+                    "surface-bright": "#fcf9f8",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#c00100",
+                    "on-tertiary-fixed": "#002107",
+                    "tertiary-container": "#008733",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#e5e2e1",
+                    "secondary-container": "#0070eb",
+                    "surface-container-low": "#f6f3f2",
+                    "on-primary-container": "#fffbff",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grayscale-map {
+            filter: grayscale(1) contrast(1.1) brightness(0.95);
+        }
+        .user-pulse {
+            box-shadow: 0 0 0 0 rgba(0, 88, 188, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 88, 188, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(0, 88, 188, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 88, 188, 0); }
+        }
+        .emergency-pulse {
+            animation: emergency-glow 1.5s infinite;
+        }
+        @keyframes emergency-glow {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body overflow-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#fcf9f8]/80 backdrop-blur-xl dark:bg-[#1c1b1b]/80 z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#0058bc] dark:text-[#d0e4ff]" data-icon="emergency">emergency</span>
+<h1 class="text-lg font-black tracking-tighter text-[#1c1b1b] dark:text-[#e6e1e0] font-['Inter'] uppercase">FarmLocator Tumbaco</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#0058bc]/5 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[#44474e] dark:text-[#c4c6d0]" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- Main Radar Map Canvas -->
+<main class="relative w-full h-screen">
+<!-- Map Background -->
+<div class="absolute inset-0 grayscale-map z-0 overflow-hidden">
+<img alt="high-contrast monochrome satellite map showing urban street layout and grid of Tumbaco Ecuador" class="w-full h-full object-cover opacity-30" data-location="Tumbaco, Quito, Ecuador" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzI_1pfPT0xroz9vDAG5zTgswgIH-9gNIFA8gKy9DMYM4SVWklpeI_ymdWDwDTpBcI6rH8TrH3QUx8LUfMjET7GNm-gj7ebZlCq5NYoIqgvANMTW3rFxlw-2Mx90SzfgzB_FOZTDrnHBsw2E7ln0BaQv9sBIsrsRtLS4Wljz9cZWaxVhSEqqyvt1er6Nqm35MJIv0S4MsOeLpucDTVWAO6rRWvQBg6Emu0SLyv7N1JoX5XKowqXQwhEc4sAHxec0k4rL92f09Txrnz"/>
+<!-- Radar Focus Ring Overlay -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] border border-secondary/10 rounded-full flex items-center justify-center">
+<div class="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] border border-secondary/20 rounded-full flex items-center justify-center">
+<div class="w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] border border-secondary/30 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Map Pins & User Center -->
+<div class="absolute inset-0 z-10">
+<!-- User Centered Location -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+<div class="relative w-8 h-8 flex items-center justify-center">
+<div class="user-pulse absolute inset-0 bg-secondary rounded-full opacity-20"></div>
+<div class="w-4 h-4 bg-secondary border-2 border-white rounded-full z-20"></div>
+</div>
+</div>
+<!-- Pharmacy Pin 1 (South-East) -->
+<div class="absolute top-[35%] left-[65%] flex flex-col items-center">
+<div class="bg-surface-container-highest px-3 py-1 rounded-full shadow-sm mb-2 backdrop-blur-md">
+<span class="text-[10px] font-black tracking-tight text-on-surface uppercase">0.4km</span>
+</div>
+<div class="w-11 h-11 bg-primary rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-xl" data-icon="medical_services" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+</div>
+<!-- Pharmacy Pin 2 (North-West) -->
+<div class="absolute top-[60%] left-[25%] flex flex-col items-center">
+<div class="bg-surface-container-highest px-3 py-1 rounded-full shadow-sm mb-2 backdrop-blur-md">
+<span class="text-[10px] font-black tracking-tight text-on-surface uppercase">1.2km</span>
+</div>
+<div class="w-11 h-11 bg-primary rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-xl" data-icon="medical_services" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+</div>
+<!-- Pharmacy Pin 3 (East) -->
+<div class="absolute top-[48%] left-[80%] flex flex-col items-center">
+<div class="bg-surface-container-highest px-3 py-1 rounded-full shadow-sm mb-2 backdrop-blur-md">
+<span class="text-[10px] font-black tracking-tight text-on-surface uppercase">0.9km</span>
+</div>
+<div class="w-11 h-11 bg-primary rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-xl" data-icon="medical_services" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+</div>
+</div>
+<!-- Glassmorphic Info Cards (Bento Style) -->
+<div class="absolute top-20 left-6 right-6 z-20 pointer-events-none">
+<div class="flex flex-col gap-3 max-w-md">
+<!-- Search Result 1: Nearest -->
+<div class="bg-surface/70 backdrop-blur-2xl rounded-full p-2 flex items-center justify-between pointer-events-auto border border-white/20 shadow-sm">
+<div class="flex items-center gap-3 pl-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="local_pharmacy" style="font-variation-settings: 'FILL' 1;">local_pharmacy</span>
+</div>
+<div>
+<p class="text-[12px] font-black leading-tight tracking-tight uppercase">Sana Sana Tumbaco</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Av. Interoceánica • Open</p>
+</div>
+</div>
+<div class="bg-tertiary px-4 py-3 rounded-full flex items-center justify-center active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-on-tertiary text-lg" data-icon="directions">directions</span>
+</div>
+</div>
+<!-- Status Chip -->
+<div class="bg-on-surface/90 backdrop-blur-xl rounded-xl p-4 flex items-center justify-between pointer-events-auto shadow-xl max-w-xs">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary emergency-pulse"></div>
+<p class="text-[11px] font-bold text-background uppercase tracking-widest">Scanning 3km radius</p>
+</div>
+<span class="material-symbols-outlined text-background/50 text-sm" data-icon="sensors">sensors</span>
+</div>
+</div>
+</div>
+<!-- Action Controls -->
+<div class="absolute bottom-24 right-6 flex flex-col gap-3 z-20">
+<button class="w-14 h-14 bg-surface-container-highest backdrop-blur-xl rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-surface" data-icon="my_location">my_location</span>
+</button>
+<button class="w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(188,1,0,0.3)] active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-primary text-2xl" data-icon="call">call</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center h-20 pb-safe px-4 bg-[#fcf9f8]/90 backdrop-blur-2xl dark:bg-[#1c1b1b]/90 z-50 rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<!-- Active Item: Radar -->
+<a class="flex flex-col items-center justify-center text-[#bc0100] dark:text-[#ffb4ab] bg-[#bc0100]/5 rounded-2xl px-4 py-1 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="radar" style="font-variation-settings: 'FILL' 1;">radar</span>
+<span class="font-['Inter'] text-[10px] font-bold tracking-tight">Radar</span>
+</a>
+<!-- Inactive Item: Saved -->
+<a class="flex flex-col items-center justify-center text-[#44474e] dark:text-[#c4c6d0] px-4 py-1 hover:bg-[#0058bc]/10 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="bookmark">bookmark</span>
+<span class="font-['Inter'] text-[10px] font-bold tracking-tight">Saved</span>
+</a>
+<!-- Inactive Item: Alerts -->
+<a class="flex flex-col items-center justify-center text-[#44474e] dark:text-[#c4c6d0] px-4 py-1 hover:bg-[#0058bc]/10 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span class="font-['Inter'] text-[10px] font-bold tracking-tight">Alerts</span>
+</a>
+</nav>
+</body></html>

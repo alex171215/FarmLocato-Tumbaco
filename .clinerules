@@ -1,0 +1,7 @@
+# Reglas de Proyecto (FarmLocator)
+1. STACK ESTRICTO: HTML5 Semántico, CSS3 Vanilla (Flexbox/Grid), JavaScript ES6+ Vanilla.
+2. PROHIBIDO usar frameworks (ni React, ni Tailwind, ni Bootstrap, ni jQuery).
+3. MAPAS: Usar únicamente Leaflet.js vía CDN.
+4. ASINCRONÍA: Usar `async/await` y `try/catch` para consumir datos.
+5. ACCESIBILIDAD: Todo HTML debe usar etiquetas semánticas y atributos ARIA (ej. `aria-live` para el spinner de carga).
+6. IHC: Botones interactivos deben tener un mínimo de 44x44px (Ley de Fitts).
