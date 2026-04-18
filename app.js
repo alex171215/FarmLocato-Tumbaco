@@ -147,58 +147,46 @@ function mostrarBottomSheet(farmacia) {
 
 
 
-// Función Asíncrona (ES6+) para consumir datos blindada contra latencia
+// Función Asíncrona (ES6+) para consumir datos - VERSIÓN ESTABLE GITHUB PAGES
 async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
     let huboError = false;
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.classList.remove('oculto');
 
-    // Limpiar marcadores
     if (typeof markersGroup !== 'undefined') markersGroup.clearLayers();
 
     let farmacias = [];
     let usóCache = false;
 
-    // Paso A: Caché
     if (!forzarOverpass) {
         const cacheData = localStorage.getItem('farmacias_tumbaco_cache');
         if (cacheData) {
             try {
                 farmacias = JSON.parse(cacheData);
                 usóCache = true;
-            } catch (e) {
-                console.warn("Caché corrupto, recargando...");
-            }
+            } catch (e) { }
         }
     }
 
     if (usóCache) {
         if (overlay && !huboError) overlay.classList.add('oculto');
     } else {
+        // AUMENTADO A 15 SEGUNDOS PARA REDES MÓVILES
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos max
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
-            // SALVAVIDAS CRÍTICO: Evita enviar variables 'undefined' que rompen la API
             const lat = (typeof ubicacionActiva !== 'undefined' && ubicacionActiva[0]) ? ubicacionActiva[0] : -0.2135;
             const lng = (typeof ubicacionActiva !== 'undefined' && ubicacionActiva[1]) ? ubicacionActiva[1] : -78.4025;
 
-            // Query optimizada con timeout interno de 5s
-            const query = `[out:json][timeout:5];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
+            // MÉTODO GET ESTÁNDAR (100% compatible con GitHub Pages y celulares)
+            const query = `[out:json][timeout:10];node["amenity"="pharmacy"](around:${radio},${lat},${lng});out qt;`;
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
-            // SOLUCIÓN DE RED: Usamos el espejo de alta velocidad (lz4) y método POST
-            const response = await fetch('https://lz4.overpass-api.de/api/interpreter', {
-                method: 'POST',
-                body: "data=" + encodeURIComponent(query),
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                signal: controller.signal
-            });
-
+            const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
 
-            if (!response.ok) throw new Error('Servidor Overpass rechazó la conexión');
+            if (!response.ok) throw new Error('Error de servidor');
 
             const data = await response.json();
             farmacias = data.elements || [];
@@ -211,7 +199,6 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
             console.error("Fallo crítico de red:", error);
             huboError = true;
             if (overlay) {
-                // UI de Error intacta
                 overlay.innerHTML = `
                     <div class="loading-text" style="text-align: center; color: white;">
                         <h2 style="color: #ff4d4d; margin-bottom: 10px;">Error de Conexión</h2>
@@ -219,8 +206,6 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
                         <button id="btn-reintentar" class="btn-primary" style="background-color: #dc3545; padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer;">Reintentar</button>
                     </div>
                 `;
-
-                // Reintento sin recargar la página
                 document.getElementById('btn-reintentar').onclick = () => {
                     overlay.innerHTML = `
                         <div class="loading-ring" aria-hidden="true"></div>
