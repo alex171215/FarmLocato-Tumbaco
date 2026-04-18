@@ -1,23 +1,20 @@
 const bottomSheet = document.getElementById('bottom-sheet');
 
-// 1. Coordenadas exactas para el área de Tumbaco (Bounding Box)
 const surOeste = L.latLng(-0.2500, -78.4500);
 const norEste = L.latLng(-0.1800, -78.3500);
 const limitesTumbaco = L.latLngBounds(surOeste, norEste);
 
-// 2. Configuración del Mapa ("Pared de Ladrillo")
 const map = L.map('map', {
-    center: [-0.2135, -78.4025], // Centro exacto de Tumbaco
-    zoom: 15,                    // Zoom inicial lo suficientemente cerca
-    minZoom: 15,                 // Prohíbe alejar la cámara. Mata los bordes grises.
-    maxZoom: 18,                 // Límite de acercamiento
-    maxBounds: limitesTumbaco,   // Encierra la cámara en este rectángulo
-    maxBoundsViscosity: 1.0,     // Rebote sólido al 100%. No deja arrastrar hacia afuera.
-    zoomControl: false,          // Minimalismo (sin botones de +/-)
-    tap: false                   // Reparación IHC: Elimina el retraso de toque en móviles
+    center: [-0.2135, -78.4025],
+    zoom: 15,
+    minZoom: 15,
+    maxZoom: 18,
+    maxBounds: limitesTumbaco,
+    maxBoundsViscosity: 1.0,
+    zoomControl: false,
+    tap: false
 });
 
-// 3. Capa base de OpenStreetMap (en escala de grises vía CSS)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
@@ -34,10 +31,7 @@ const iconoFarmacia = L.divIcon({
 
 const iconoUsuario = L.divIcon({
     className: 'user-marker',
-    html: `
-        <div class="user-pulse"></div>
-        <div class="user-dot"></div>
-    `,
+    html: `<div class="user-pulse"></div><div class="user-dot"></div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16]
 });
@@ -81,7 +75,6 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
 // ==========================================
 function mostrarBottomSheet(farmacia) {
     const tags = farmacia.tags || {};
-
     document.getElementById('bs-nombre').textContent = tags.name || "Farmacia sin nombre";
 
     const latlngUsuario = L.latLng(ubicacionActiva[0], ubicacionActiva[1]);
@@ -135,7 +128,7 @@ function mostrarBottomSheet(farmacia) {
 
     const btnNavegar = document.getElementById('btn-navegar');
     btnNavegar.onclick = () => {
-        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=$${ubicacionActiva[0]},${ubicacionActiva[1]}&destination=${farmacia.lat},${farmacia.lon}&travelmode=walking`;
+        const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&origin=$$${ubicacionActiva[0]},${ubicacionActiva[1]}&destination=${farmacia.lat},${farmacia.lon}&travelmode=walking`;
         window.open(urlGoogleMaps, '_blank');
     };
 
@@ -143,10 +136,9 @@ function mostrarBottomSheet(farmacia) {
 }
 
 // ==========================================
-// CONSULTA A LA API (Con Caché y Kumi Server)
+// CONSULTA A LA API (Sin trampas, Fallo rápido, URL limpia)
 // ==========================================
 async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
-    let huboError = false;
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
         overlay.innerHTML = `<div class="loading-ring"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km.</p></div>`;
@@ -171,12 +163,21 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
         if (overlay) overlay.classList.add('oculto');
         estaBuscando = false;
     } else {
+        // Validación de red antes de intentar
+        if (!navigator.onLine) {
+            if (overlay) overlay.classList.add('oculto');
+            mostrarAviso("Sin conexión a internet. No se pueden descargar datos.");
+            estaBuscando = false;
+            return;
+        }
+
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos max
 
         try {
-            const query = `[out:json][timeout:10];node["amenity"="pharmacy"](around:${radio},${ubicacionActiva[0]},${ubicacionActiva[1]});out qt;`;
-            const url = `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(query)}`;
+            // SINTAXIS CORRECTA SIN < >
+            const query = `[out:json][timeout:8];node["amenity"="pharmacy"](around:${radio},${ubicacionActiva[0]},${ubicacionActiva[1]});out qt;`;
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
@@ -190,28 +191,16 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
                 localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             }
         } catch (error) {
-            huboError = true;
-            if (overlay) {
-                overlay.innerHTML = `
-                    <div class="loading-text" style="text-align: center; color: white;">
-                        <h2 style="color: #ff4d4d;">Error de Conexión</h2>
-                        <p>No se pudo conectar al servidor. Intenta de nuevo.</p>
-                        <button id="btn-reintentar" class="btn-primary" style="background: var(--color-azul-rey); margin-top:15px; border:none; padding:10px 20px; border-radius:8px; color:white; cursor:pointer;">Reintentar</button>
-                    </div>`;
-
-                document.getElementById('btn-reintentar').onclick = () => {
-                    fetchFarmacias(radio, forzarOverpass);
-                };
-            }
-            estaBuscando = false;
-            return;
+            // Cero trampas. Si falla, avisamos y salimos.
+            console.error("Fallo de red:", error);
+            mostrarAviso("Servidor no disponible. Por favor, reintenta más tarde.");
         } finally {
-            if (overlay && !huboError) overlay.classList.add('oculto');
-            if (!huboError) estaBuscando = false;
+            if (overlay) overlay.classList.add('oculto');
+            estaBuscando = false;
         }
     }
 
-    if (farmacias.length === 0 && !huboError) {
+    if (farmacias.length === 0 && navigator.onLine) {
         mostrarAviso("No hay farmacias en este radio.");
         const btn5km = document.getElementById('btn-expandir-5km');
         if (btn5km) btn5km.classList.remove('oculto');
@@ -232,16 +221,41 @@ async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
 }
 
 // ==========================================
-// ASIGNACIÓN DE EVENTOS AL CARGAR LA PÁGINA
+// GESTIÓN DE EVENTOS Y DETECTOR DE RED OFFLINE
 // ==========================================
 window.addEventListener('load', () => {
     if (!btnGPS) return;
 
-    // Quitar skeleton cuando JS esté listo
-    btnGPS.removeAttribute('disabled');
+    // Quitar skeleton
     btnGPS.classList.remove('skeleton');
 
-    // Lógica del botón de GPS (Con pausa para el modal nativo)
+    // 1. EVALUACIÓN DE RED INICIAL (H5: Prevención de Errores)
+    if (!navigator.onLine) {
+        btnGPS.disabled = true;
+        btnGPS.textContent = "Sin conexión a internet";
+        mostrarAviso("Se requiere conexión a internet para iniciar la búsqueda.");
+    } else {
+        btnGPS.removeAttribute('disabled');
+    }
+
+    // 2. LISTENERS DE RED EN TIEMPO REAL
+    window.addEventListener('offline', () => {
+        mostrarAviso("Se ha perdido la conexión a internet.");
+        if (btnGPS) {
+            btnGPS.disabled = true;
+            if (btnGPS.textContent === "Activar GPS") btnGPS.textContent = "Sin conexión a internet";
+        }
+    });
+
+    window.addEventListener('online', () => {
+        mostrarAviso("Conexión restaurada.");
+        if (btnGPS) {
+            btnGPS.disabled = false;
+            if (btnGPS.textContent === "Sin conexión a internet") btnGPS.textContent = "Activar GPS";
+        }
+    });
+
+    // 3. Lógica del botón de GPS 
     btnGPS.onclick = () => {
         if (estaBuscando) return;
         estaBuscando = true;
@@ -275,7 +289,7 @@ window.addEventListener('load', () => {
         );
     };
 
-    // Evento de botón expandir 5km
+    // Eventos secundarios
     const btnExpandir = document.getElementById('btn-expandir-5km');
     if (btnExpandir) {
         btnExpandir.onclick = () => {
@@ -284,15 +298,11 @@ window.addEventListener('load', () => {
         };
     }
 
-    // Evento para centrar el mapa de nuevo
     const btnRecenter = document.getElementById('btn-recenter');
     if (btnRecenter) {
-        btnRecenter.onclick = () => {
-            map.setView(ubicacionActiva, 15);
-        };
+        btnRecenter.onclick = () => map.setView(ubicacionActiva, 15);
     }
 
-    // Cerrar Bottom Sheet
     const btnCerrarBs = document.getElementById('btn-cerrar-bs');
     if (btnCerrarBs) {
         btnCerrarBs.onclick = () => {
