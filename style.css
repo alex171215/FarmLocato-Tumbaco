@@ -580,3 +580,35 @@ html {
     background-color: rgba(255, 255, 255, 0.5);
     /* Resalta aún más el fondo */
 }
+
+/* =========================================
+   AJUSTE DE ESPACIADO: ZOOM Y RECENTRAR
+========================================= */
+/* 1. Subir el Zoom en móviles para salvar la barra de navegación nativa */
+.leaflet-bottom.leaflet-right {
+    margin-bottom: 2.5rem !important;
+    /* Lo aleja del borde inferior del celular */
+    margin-right: 0.5rem !important;
+}
+
+/* 2. Colocar el botón de Recentrar exactamente arriba del Zoom */
+.btn-recenter {
+    bottom: 8rem !important;
+    /* Sube por encima de los botones de zoom */
+    right: 1.15rem !important;
+    /* Alineación vertical perfecta con el zoom */
+}
+
+/* 3. Ajuste fino de posiciones para la versión de Escritorio (PC) */
+@media (min-width: 768px) {
+    .leaflet-bottom.leaflet-right {
+        margin-bottom: 2rem !important;
+        margin-right: 1rem !important;
+    }
+
+    .btn-recenter {
+        bottom: 7.5rem !important;
+        /* Se apila sobre el zoom sin solaparse */
+        right: 1.7rem !important;
+    }
+}
