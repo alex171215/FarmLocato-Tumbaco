@@ -267,11 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     iniciarMapa();
                 },
                 () => {
-                    mostrarAviso("Permiso denegado. Usando centro de Tumbaco.");
+                    mostrarAviso("Permiso denegado o no detectado. Usando centro de Tumbaco.");
                     ubicacionActiva = [...centroTumbaco];
                     iniciarMapa();
                 },
-                { enableHighAccuracy: true }
+                // Añadimos un límite de 15 segundos. Si la PC no logra ubicarse, usa Tumbaco y no se congela.
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         };
     }
