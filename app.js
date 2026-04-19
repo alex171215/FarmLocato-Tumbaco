@@ -44,11 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bottomSheet) {
         bottomSheet.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
         bottomSheet.addEventListener('touchmove', (e) => {
+            e.stopPropagation(); // Cumplimiento estricto del PDF
             if (e.touches[0].clientY - startY > 40) {
                 bottomSheet.classList.remove('activo');
                 document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
             }
-        }, { passive: true });
+        }, { passive: false }); // Debe ser false para que stopPropagation funcione correctamente
     }
 
     // UTILIDADES
@@ -108,9 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let telLimpio = telefono.replace(/[\s\-\(\)]/g, '');
             if (telLimpio.startsWith('09') || telLimpio.startsWith('+5939') || telLimpio.startsWith('5939')) {
                 txtContacto.textContent = "WhatsApp";
+                elemContacto.style.backgroundColor = "var(--color-verde-whatsapp)"; // Añadido
+                elemContacto.style.color = "white";
                 elemContacto.onclick = () => window.open(`https://wa.me/${telLimpio.startsWith('09') ? '593' + telLimpio.substring(1) : telLimpio.replace('+', '')}`, '_blank');
             } else {
                 txtContacto.textContent = "Llamar";
+                elemContacto.style.backgroundColor = "#757575"; // Gris prometido en PDF
+                elemContacto.style.color = "white";
                 elemContacto.onclick = () => window.open(`tel:${telLimpio}`, '_self');
             }
         }
@@ -172,9 +177,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 farmacias = (await response.json()).elements || [];
                 if (farmacias.length > 0) localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             } catch (error) {
-                mostrarAviso("Error de red. Reintente la búsqueda.");
+                // Cumplimiento Heurística 9 (PDF)
+                if (overlay) {
+                    overlay.innerHTML = `
+                    <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
+                        <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Error de Conexión</h2>
+                        <p style="margin-bottom: 15px;">No fue posible conectar con el servidor de mapas.</p>
+                        <button id="btn-reintentar-api" class="btn-primary" style="background-color: var(--color-azul-rey); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Reintentar</button>
+                    </div>
+                `;
+                    overlay.classList.remove('oculto');
+                    document.getElementById('btn-reintentar-api').onclick = () => fetchFarmacias(radio, forzarOverpass);
+                }
             } finally {
-                if (overlay) overlay.classList.add('oculto');
+                // Modificado para no ocultar el overlay si hubo error (porque ahora tiene el botón reintentar)
+                if (overlay && !document.getElementById('btn-reintentar-api')) overlay.classList.add('oculto');
                 estaBuscando = false;
             }
         }
