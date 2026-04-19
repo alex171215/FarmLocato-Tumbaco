@@ -587,15 +587,12 @@ html {
 /* 1. Subir el Zoom en móviles (Salvar la barra de navegación iOS/Android) */
 .leaflet-bottom.leaflet-right {
     margin-bottom: 4rem !important;
-    /* Sube drásticamente para evadir la barra nativa del celular */
 }
 
 /* 2. Colocar el botón de Recentrar bien arriba del Zoom en móviles */
 .btn-recenter {
     bottom: 9.5rem !important;
-    /* Distancia segura para no aplastar el botón de zoom */
     right: 0.8rem !important;
-    /* Alineación central perfecta con el control de Leaflet */
 }
 
 /* 3. Ajuste fino de posiciones para la versión de Escritorio (PC) */
@@ -605,8 +602,8 @@ html {
     }
 
     .btn-recenter {
-        bottom: 8.5rem !important;
-        /* Separa los botones para solucionar el solapamiento de la imagen */
+        bottom: 10.5rem !important;
+        /* <-- AUMENTAMOS DE 8.5rem a 10.5rem PARA DARLE RESPIRO */
         right: 0.8rem !important;
     }
 }
