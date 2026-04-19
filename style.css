@@ -72,7 +72,8 @@ html {
     align-items: center;
     justify-content: center;
     z-index: 20000;
-    pointer-events: auto; /* Asegurar interceptación mientras es visible */
+    pointer-events: auto;
+    /* Asegurar interceptación mientras es visible */
     transition: opacity 0.5s ease;
     gap: 3rem;
     text-align: center;
@@ -220,6 +221,7 @@ html {
         width: 450px !important;
         border-radius: 15px 15px 0 0 !important;
     }
+
     #bottom-sheet.activo {
         transform: translate(-50%, 0) !important;
     }
@@ -372,10 +374,13 @@ html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--color-blanco); /* H1: Opacidad Total */
-    z-index: 10001; /* Sobre todo */
+    background-color: var(--color-blanco);
+    /* H1: Opacidad Total */
+    z-index: 10001;
+    /* Sobre todo */
     display: flex;
-    pointer-events: auto; /* Asegurar que capture toques antes de inicializarse el mapa */
+    pointer-events: auto;
+    /* Asegurar que capture toques antes de inicializarse el mapa */
     justify-content: center;
     align-items: center;
     padding: 1.5rem;
@@ -412,7 +417,8 @@ html {
 
 #btn-activar-gps {
     width: 100%;
-    min-height: 3.5rem; /* 56px Fitts Law */
+    min-height: 3.5rem;
+    /* 56px Fitts Law */
     background-color: var(--color-azul-rey);
     color: var(--color-blanco);
     border: none;
@@ -446,8 +452,13 @@ html {
 }
 
 @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* =========================================
@@ -461,14 +472,16 @@ html {
     background-color: var(--color-azul-rey);
     color: var(--color-blanco);
     border: none;
-    border-radius: 2rem; /* Pill shape */
+    border-radius: 2rem;
+    /* Pill shape */
     padding: 0.5rem 2rem;
     font-weight: bold;
     font-size: 1rem;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
     cursor: pointer;
     z-index: 9999;
-    min-height: 2.75rem; /* 44px Fitts Law */
+    min-height: 2.75rem;
+    /* 44px Fitts Law */
     transition: transform 0.2s ease, opacity 0.3s ease;
     display: flex;
     align-items: center;
@@ -481,4 +494,33 @@ html {
 
 .btn-expandir.oculto {
     display: none;
+}
+
+/* =========================================
+   BOTÓN CERRAR BOTTOM SHEET (Heurística 3)
+========================================= */
+#btn-cerrar-bs {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: var(--color-gris-oscuro);
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    z-index: 10;
+}
+
+#btn-cerrar-bs:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+#btn-cerrar-bs svg {
+    width: 20px;
+    height: 20px;
 }
