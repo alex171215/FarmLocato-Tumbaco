@@ -562,3 +562,20 @@ html {
     height: 22px;
     stroke: currentColor;
 }
+
+/* =========================================
+   ACCESIBILIDAD TECLADO (WCAG 2.2)
+========================================= */
+/* Foco general para botones */
+:focus-visible {
+    outline: 3px solid var(--color-azul-rey);
+    outline-offset: 2px;
+}
+
+/* Foco específico para los pines del mapa */
+.leaflet-marker-icon:focus-visible {
+    outline: 4px solid var(--color-rojo-trafico);
+    outline-offset: 4px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5); /* Resalta aún más el fondo */
+}
