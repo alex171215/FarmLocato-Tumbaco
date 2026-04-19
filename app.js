@@ -117,7 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnNavegar = document.getElementById('btn-navegar');
         btnNavegar.onclick = () => {
-            const urlMap = `https://www.google.com/maps/dir/?api=1&origin=$${parseFloat(ubicacionActiva[0])},${parseFloat(ubicacionActiva[1])}&destination=${parseFloat(farmacia.lat)},${parseFloat(farmacia.lon)}`;
+            // Extraemos las coordenadas limpias
+            const latOrigen = parseFloat(ubicacionActiva[0]);
+            const lngOrigen = parseFloat(ubicacionActiva[1]);
+            const latDestino = parseFloat(farmacia.lat);
+            const lngDestino = parseFloat(farmacia.lon);
+
+            // URL Oficial y estándar de Google Maps para trazar rutas
+            const urlMap = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}`;
+
             window.open(urlMap, '_blank');
         };
 
