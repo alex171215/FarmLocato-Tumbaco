@@ -139,6 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // FETCH API (Overpass)
     async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
+        let huboError = false; // 1. Nueva bandera de control de flujo
+
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
             overlay.innerHTML = `<div class="loading-ring"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km.</p></div>`;
@@ -177,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 farmacias = (await response.json()).elements || [];
                 if (farmacias.length > 0) localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             } catch (error) {
+                huboError = true; // 2. Si falla la red, encendemos la bandera
+
                 // Cumplimiento Heurística 9 (PDF)
                 if (overlay) {
                     overlay.innerHTML = `
@@ -190,25 +194,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('btn-reintentar-api').onclick = () => fetchFarmacias(radio, forzarOverpass);
                 }
             } finally {
-                // Modificado para no ocultar el overlay si hubo error (porque ahora tiene el botón reintentar)
-                if (overlay && !document.getElementById('btn-reintentar-api')) overlay.classList.add('oculto');
+                // Modificado para ocultar el overlay solo si NO hubo error
+                if (overlay && !huboError) overlay.classList.add('oculto');
                 estaBuscando = false;
             }
         }
 
-        if (farmacias.length === 0 && navigator.onLine) {
-            mostrarAviso("No hay resultados a 2km. Toca el botón inferior para buscar a 5km.");
-            const btn5km = document.getElementById('btn-expandir-5km');
-            if (btn5km) btn5km.classList.remove('oculto');
-        } else {
-            farmacias.forEach(f => {
-                const m = L.marker([f.lat, f.lon], { icon: iconoFarmacia }).addTo(markersGroup);
-                m.on('click', () => {
-                    document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
-                    if (m.getElement()) m.getElement().querySelector('.pin-medico').classList.add('pin-activo');
-                    mostrarBottomSheet(f);
+        // 3. Evalúa si mostrar los 5km o los pines SOLO si la red no falló
+        if (!huboError) {
+            if (farmacias.length === 0 && navigator.onLine) {
+                mostrarAviso("No hay resultados a 2km. Toca el botón inferior para buscar a 5km.");
+                const btn5km = document.getElementById('btn-expandir-5km');
+                if (btn5km) btn5km.classList.remove('oculto');
+            } else {
+                farmacias.forEach(f => {
+                    const m = L.marker([f.lat, f.lon], { icon: iconoFarmacia }).addTo(markersGroup);
+                    m.on('click', () => {
+                        document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
+                        if (m.getElement()) m.getElement().querySelector('.pin-medico').classList.add('pin-activo');
+                        mostrarBottomSheet(f);
+                    });
                 });
-            });
+            }
         }
     }
 
@@ -260,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     iniciarMapa();
                 },
                 () => {
-                    mostrarAviso("Permiso denegado. Usando Tumbaco.");
+                    mostrarAviso("Permiso denegado. Usando centro de Tumbaco.");
                     ubicacionActiva = [...centroTumbaco];
                     iniciarMapa();
                 },
