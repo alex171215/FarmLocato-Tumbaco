@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (farmacias.length === 0 && navigator.onLine) {
-            mostrarAviso("Área sin resultados disponibles.");
+            mostrarAviso("No hay resultados a 2km. Toca el botón inferior para buscar a 5km.");
             const btn5km = document.getElementById('btn-expandir-5km');
             if (btn5km) btn5km.classList.remove('oculto');
         } else {
