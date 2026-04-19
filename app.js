@@ -208,11 +208,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btn5km) btn5km.classList.remove('oculto');
             } else {
                 farmacias.forEach(f => {
-                    const m = L.marker([f.lat, f.lon], { icon: iconoFarmacia }).addTo(markersGroup);
+                    const m = L.marker([f.lat, f.lon], { icon: iconoFarmacia, keyboard: true }).addTo(markersGroup);
+
+                    // ACCESIBILIDAD: Inyectar atributos para teclado a los pines
+                    const markerElement = m.getElement();
+                    if (markerElement) {
+                        markerElement.setAttribute('tabindex', '0'); // Entra en el flujo de la tecla TAB
+                        markerElement.setAttribute('role', 'button');
+                        markerElement.setAttribute('aria-label', `Farmacia: ${f.tags.name || 'Sin nombre'}`);
+
+                        // Escuchar la tecla Enter o Espacio sobre el pin
+                        markerElement.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                m.fire('click'); // Simula un clic con el mouse
+                            }
+                        });
+                    }
+
                     m.on('click', () => {
                         document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
                         if (m.getElement()) m.getElement().querySelector('.pin-medico').classList.add('pin-activo');
                         mostrarBottomSheet(f);
+
+                        // Mover el foco al botón de cerrar para mantener el orden lógico
+                        const btnCerrar = document.getElementById('btn-cerrar-bs');
+                        if (btnCerrar) btnCerrar.focus();
                     });
                 });
             }
