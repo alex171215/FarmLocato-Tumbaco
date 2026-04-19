@@ -524,3 +524,41 @@ html {
     width: 20px;
     height: 20px;
 }
+
+/* =========================================
+   BARRA GRIS Y BOTÓN X (CORRECCIÓN IHC)
+========================================= */
+.drag-handle {
+    width: 50px;
+    height: 6px;
+    background-color: #d1d5db;
+    border-radius: 4px;
+    margin: -5px auto 15px auto;
+    display: block !important;
+}
+
+#btn-cerrar-bs {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #f3f4f6;
+    /* Fondo gris claro */
+    border: none;
+    color: var(--color-superficie);
+    cursor: pointer;
+    padding: 6px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 99999;
+    /* Obliga a la X a estar sobre todo */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    /* Sombra para resaltar */
+}
+
+#btn-cerrar-bs svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+}
