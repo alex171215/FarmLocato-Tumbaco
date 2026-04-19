@@ -264,11 +264,16 @@ window.addEventListener('load', () => {
 
     btnGPS.classList.remove('skeleton');
 
+    // CORRECCIÓN CRÍTICA: Desbloquear el botón si hay internet
     if (!navigator.onLine) {
         btnGPS.disabled = true;
         btnGPS.textContent = "Sin conexión a internet";
+    } else {
+        btnGPS.disabled = false; // <-- ESTA ES LA LÍNEA QUE FALTABA
+        btnGPS.textContent = "Activar GPS";
     }
 
+    // (A partir de aquí sigue el código que ya tienes)
     window.addEventListener('offline', () => {
         if (btnGPS) {
             btnGPS.disabled = true;
