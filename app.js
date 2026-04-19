@@ -20,9 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
         maxZoom: 18,
         maxBounds: limitesTumbaco,
         maxBoundsViscosity: 1.0,
-        zoomControl: false,
+        zoomControl: false, // Mantenemos esto en false para que no salgan arriba a la izquierda
         tap: false
     });
+
+    // INYECTA ESTA LÍNEA EXACTAMENTE AQUÍ (Google Maps style)
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
