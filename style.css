@@ -568,42 +568,45 @@ html {
    ACCESIBILIDAD Y GESTALT (FITTS & PROXIMIDAD)
 ========================================= */
 
-/* 1. LEY DE FITTS: Forzar tamaño mínimo de 48x48px en controles nativos de Leaflet */
+/* 1. LEY DE FITTS: Forzar tamaño mínimo exacto de 44x44px (WCAG 2.2) */
 .leaflet-touch .leaflet-control-zoom a,
 .leaflet-control-zoom a {
-    width: 3rem !important;
-    /* 48px exactos */
-    height: 3rem !important;
-    /* 48px exactos */
-    line-height: 3rem !important;
-    font-size: 1.5rem !important;
-    /* Símbolos + y - más legibles */
+    width: 2.75rem !important;
+    /* 44px exactos - Ni muy grandes, ni muy pequeños */
+    height: 2.75rem !important;
+    /* 44px exactos */
+    line-height: 2.75rem !important;
+    font-size: 1.4rem !important;
 }
 
-/* 2. LEY DE PROXIMIDAD: Agrupación visual de controles de navegación */
+/* Neutralizar márgenes internos rebeldes de Leaflet que causaban el solapamiento */
+.leaflet-control-zoom {
+    margin-bottom: 0 !important;
+}
+
+/* 2. LEY DE PROXIMIDAD: Agrupación visual en Móviles */
 .leaflet-bottom.leaflet-right {
-    margin-bottom: 3.5rem !important;
-    /* Altura segura para la barra de navegación del móvil */
-    margin-right: 1rem !important;
+    margin-bottom: 3rem !important;
+    /* Altura segura para la barra nativa de Android/iOS */
+    margin-right: 0.8rem !important;
 }
 
 .btn-recenter {
-    /* MATEMÁTICA EXACTA: Margen del zoom (3.5rem) + Alto de los 2 botones de zoom (6rem) + Gap visual (0.5rem) */
-    bottom: calc(10rem) !important;
-    right: 1rem !important;
-    /* Misma alineación que el zoom */
+    /* MATEMÁTICA: Margen zoom (3rem) + Alto de los botones zoom (5.5rem) + Gap visual (0.5rem) */
+    bottom: 9rem !important;
+    right: 0.8rem !important;
 }
 
-/* 3. Ajuste fino de posiciones para la versión de Escritorio (PC) */
+/* 3. LEY DE PROXIMIDAD: Ajuste exacto para Escritorio (PC) */
 @media (min-width: 768px) {
     .leaflet-bottom.leaflet-right {
         margin-bottom: 2rem !important;
-        margin-right: 2rem !important;
+        margin-right: 1.5rem !important;
     }
 
     .btn-recenter {
-        /* Margen PC (2rem) + Alto botones (6rem) + Gap (0.5rem) */
-        bottom: calc(8.5rem) !important;
-        right: 2rem !important;
+        /* MATEMÁTICA: Margen zoom (2rem) + Alto zoom (5.5rem) + Gap visual (0.5rem) */
+        bottom: 8rem !important;
+        right: 1.5rem !important;
     }
 }
