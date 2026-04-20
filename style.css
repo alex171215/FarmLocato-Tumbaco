@@ -565,48 +565,69 @@ html {
 }
 
 /* =========================================
-   ACCESIBILIDAD Y GESTALT (FITTS & PROXIMIDAD)
+   SISTEMA DE NAVEGACIÓN (FITTS 44PX & ESTÉTICA MODERNA)
 ========================================= */
 
-/* 1. LEY DE FITTS: Forzar tamaño mínimo exacto de 44x44px (WCAG 2.2) */
+/* 1. ESTÉTICA: Contenedor principal de Zoom redondeado */
+.leaflet-touch .leaflet-control-zoom,
+.leaflet-control-zoom {
+    margin: 0 !important;
+    margin-bottom: 12px !important;
+    /* ¡NUEVO! Separación perfecta con la marca de agua */
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background-color: #e0e0e0;
+}
+
+/* 2. LEY DE FITTS: Botones de 44x44px exactos limpios */
 .leaflet-touch .leaflet-control-zoom a,
 .leaflet-control-zoom a {
-    width: 2.75rem !important;
-    /* 44px exactos - Ni muy grandes, ni muy pequeños */
-    height: 2.75rem !important;
-    /* 44px exactos */
-    line-height: 2.75rem !important;
-    font-size: 1.4rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    font-size: 1.5rem !important;
+    background-color: var(--color-blanco) !important;
+    color: var(--color-superficie) !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Neutralizar márgenes internos rebeldes de Leaflet que causaban el solapamiento */
-.leaflet-control-zoom {
-    margin-bottom: 0 !important;
-}
-
-/* 2. LEY DE PROXIMIDAD: Agrupación visual en Móviles */
+/* 3. POSICIONAMIENTO EN MÓVIL (Y Landscape) */
 .leaflet-bottom.leaflet-right {
-    margin-bottom: 3rem !important;
-    /* Altura segura para la barra nativa de Android/iOS */
-    margin-right: 0.8rem !important;
+    margin-bottom: 3.5rem !important;
+    margin-right: 1rem !important;
 }
 
 .btn-recenter {
-    /* MATEMÁTICA: Margen zoom (3rem) + Alto de los botones zoom (5.5rem) + Gap visual (0.5rem) */
-    bottom: 9rem !important;
-    right: 0.8rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    /* Subimos 12px (de 110 a 122) para compensar el margen que le dimos al Zoom 
+       y mantener exactamente el mismo gap que te gustó en el celular */
+    bottom: calc(3.5rem + 122px) !important;
+    right: 1rem !important;
+    background-color: var(--color-blanco);
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* 3. LEY DE PROXIMIDAD: Ajuste exacto para Escritorio (PC) */
+/* 4. POSICIONAMIENTO EN COMPUTADORA (Ajuste anti-solapamiento) */
 @media (min-width: 768px) {
     .leaflet-bottom.leaflet-right {
-        margin-bottom: 2rem !important;
-        margin-right: 1.5rem !important;
+        margin-bottom: 24px !important;
+        margin-right: 24px !important;
     }
 
     .btn-recenter {
-        /* MATEMÁTICA: Margen zoom (2rem) + Alto zoom (5.5rem) + Gap visual (0.5rem) */
-        bottom: 8rem !important;
-        right: 1.5rem !important;
+        /* Reducimos drásticamente de 160px a 140px para matar el hueco gigante 
+           y lograr el mismo espaciado elegante que en el móvil */
+        bottom: 146px !important;
+        right: 24px !important;
     }
 }

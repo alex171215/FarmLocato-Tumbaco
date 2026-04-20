@@ -287,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userMarker) map.removeLayer(userMarker);
         userMarker = L.marker(ubicacionActiva, { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
         mapaInicializado = true;
-        window._testFetch = fetchFarmacias;
         fetchFarmacias();
     }
 
