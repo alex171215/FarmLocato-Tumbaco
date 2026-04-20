@@ -303,6 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // EVENTOS SECUNDARIOS
     window.addEventListener('offline', () => {
         if (btnGPS) { btnGPS.disabled = true; btnGPS.textContent = "Sin conexión a internet"; }
+        // Nuevo: Cumplimiento estricto de Heurística 9
+        mostrarAviso("Se perdió la conexión. Revisa tu Wi-Fi o datos móviles para continuar.");
     });
     window.addEventListener('online', () => {
         if (btnGPS) { btnGPS.disabled = false; btnGPS.textContent = "Activar GPS"; }
