@@ -20,11 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         maxZoom: 18,
         maxBounds: limitesTumbaco,
         maxBoundsViscosity: 1.0,
-        zoomControl: false, // Mantenemos esto en false para que no salgan arriba a la izquierda
+        zoomControl: false,
         tap: false
     });
 
-    // INYECTA ESTA LÍNEA EXACTAMENTE AQUÍ (Google Maps style)
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -37,22 +36,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconoFarmacia = L.divIcon({ className: 'pin-wrapper', html: '<div class="pin-medico"></div>', iconSize: [48, 48], iconAnchor: [24, 24] });
     const iconoUsuario = L.divIcon({ className: 'user-marker', html: `<div class="user-pulse"></div><div class="user-dot"></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
 
-    // CIERRE DE BOTTOM SHEET (Clic en mapa y Deslizamiento)
-    map.on('click', () => {
-        if (bottomSheet) bottomSheet.classList.remove('activo');
+    // ─── UTILIDAD DE CIERRE CENTRALIZADA ───────────────────────────────────────
+    // BUG 5 FIX: Toda lógica de cierre pasa por aquí para garantizar que
+    // aria-hidden="true" siempre se aplique al cerrar, en los 3 puntos de escape.
+    function cerrarBottomSheet() {
+        if (!bottomSheet) return;
+        bottomSheet.classList.remove('activo');
+        bottomSheet.setAttribute('aria-hidden', 'true'); // ← BUG 5 FIX
         document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
-    });
+    }
 
+    // CIERRE DE BOTTOM SHEET (Clic en mapa)
+    map.on('click', cerrarBottomSheet);
+
+    // CIERRE DE BOTTOM SHEET (Deslizamiento / Swipe hacia abajo)
     let startY = 0;
     if (bottomSheet) {
         bottomSheet.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
         bottomSheet.addEventListener('touchmove', (e) => {
-            e.stopPropagation(); // Cumplimiento estricto del PDF
+            e.stopPropagation();
             if (e.touches[0].clientY - startY > 40) {
-                bottomSheet.classList.remove('activo');
-                document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
+                cerrarBottomSheet(); // ← Usa la utilidad centralizada
             }
-        }, { passive: false }); // Debe ser false para que stopPropagation funcione correctamente
+        }, { passive: false });
     }
 
     // UTILIDADES
@@ -72,7 +78,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // RENDER BOTTOM SHEET
+    // ─── SVG ÍCONOS (BUG 4 FIX) ────────────────────────────────────────────────
+    // Definidos como constantes para no repetir el markup en cada llamada.
+    const SVG_WHATSAPP = `
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.845L.057 23.428l5.752-1.506A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.694-.497-5.241-1.369l-.373-.221-3.415.895.91-3.326-.243-.387A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+        </svg>`;
+
+    const SVG_TELEFONO = `
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+        </svg>`;
+
+    // ─── RENDER BOTTOM SHEET ────────────────────────────────────────────────────
     function mostrarBottomSheet(farmacia) {
         if (!bottomSheet) return;
         const tags = farmacia.tags || {};
@@ -101,52 +120,64 @@ document.addEventListener('DOMContentLoaded', () => {
             contenedorHorario.style.display = 'none';
         }
 
+        // ── ALGORITMO DE CONTACTO ADAPTATIVO (BUG 4 FIX) ──────────────────────
         const elemContacto = document.getElementById('btn-contacto');
         const txtContacto = document.getElementById('text-contacto');
+        const iconContainer = document.getElementById('icon-container'); // ← Nueva referencia
         let telefono = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || "";
 
         if (!telefono) {
+            // Sin teléfono: ocultar botón completo (Heurística 5 — Prevención de errores)
             elemContacto.style.display = 'none';
         } else {
             elemContacto.style.display = 'flex';
             let telLimpio = telefono.replace(/[\s\-\(\)]/g, '');
+
             if (telLimpio.startsWith('09') || telLimpio.startsWith('+5939') || telLimpio.startsWith('5939')) {
+                // Rama WhatsApp: botón verde + ícono de WhatsApp
                 txtContacto.textContent = "WhatsApp";
-                elemContacto.style.backgroundColor = "var(--color-verde-whatsapp)"; // Añadido
+                iconContainer.innerHTML = SVG_WHATSAPP;         // ← BUG 4 FIX
+                elemContacto.style.backgroundColor = "var(--color-verde-whatsapp)";
                 elemContacto.style.color = "white";
-                elemContacto.onclick = () => window.open(`https://wa.me/${telLimpio.startsWith('09') ? '593' + telLimpio.substring(1) : telLimpio.replace('+', '')}`, '_blank');
+                elemContacto.setAttribute('aria-label', 'Contactar por WhatsApp');
+                elemContacto.onclick = () => window.open(
+                    `https://wa.me/${telLimpio.startsWith('09') ? '593' + telLimpio.substring(1) : telLimpio.replace('+', '')}`,
+                    '_blank'
+                );
             } else {
+                // Rama llamada: botón gris + ícono de teléfono
                 txtContacto.textContent = "Llamar";
-                elemContacto.style.backgroundColor = "#757575"; // Gris prometido en PDF
+                iconContainer.innerHTML = SVG_TELEFONO;         // ← BUG 4 FIX
+                elemContacto.style.backgroundColor = "#757575";
                 elemContacto.style.color = "white";
+                elemContacto.setAttribute('aria-label', 'Llamar por teléfono');
                 elemContacto.onclick = () => window.open(`tel:${telLimpio}`, '_self');
             }
         }
 
         const btnNavegar = document.getElementById('btn-navegar');
         btnNavegar.onclick = () => {
-            // Extraemos las coordenadas limpias
             const latOrigen = parseFloat(ubicacionActiva[0]);
             const lngOrigen = parseFloat(ubicacionActiva[1]);
             const latDestino = parseFloat(farmacia.lat);
             const lngDestino = parseFloat(farmacia.lon);
-
-            // URL Oficial y estándar de Google Maps para trazar rutas
             const urlMap = `https://www.google.com/maps/dir/?api=1&origin=${latOrigen},${lngOrigen}&destination=${latDestino},${lngDestino}`;
-
             window.open(urlMap, '_blank');
         };
 
+        // BUG 5 FIX: Quitar aria-hidden ANTES de mostrar, para que los screen
+        // readers anuncien el diálogo correctamente en el momento que aparece.
+        bottomSheet.removeAttribute('aria-hidden');
         bottomSheet.classList.add('activo');
     }
 
-    // FETCH API (Overpass)
+    // ─── FETCH API (Overpass) ───────────────────────────────────────────────────
     async function fetchFarmacias(radio = 2000, forzarOverpass = false) {
-        let huboError = false; // 1. Nueva bandera de control de flujo
+        let huboError = false;
 
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
-            overlay.innerHTML = `<div class="loading-ring"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km.</p></div>`;
+            overlay.innerHTML = `<div class="loading-ring" aria-hidden="true"></div><div class="loading-text"><h2>Ubicando farmacias...</h2><p>Escaneando radio de ${radio / 1000}km. Por favor, espere.</p></div>`;
             overlay.classList.remove('oculto');
         }
 
@@ -156,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!forzarOverpass) {
             const cache = localStorage.getItem('farmacias_tumbaco_cache');
-            if (cache) { try { farmacias = JSON.parse(cache); usoCache = true; } catch (e) { } }
+            if (cache) { try { farmacias = JSON.parse(cache); usoCache = true; } catch (e) { /* Caché corrupta, ignorar */ } }
         }
 
         if (usoCache && farmacias.length > 0) {
@@ -178,32 +209,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { signal: controller.signal });
                 clearTimeout(timeoutId);
 
-                if (!response.ok) throw new Error("Error API");
+                if (!response.ok) throw new Error("Error API: " + response.status);
                 farmacias = (await response.json()).elements || [];
                 if (farmacias.length > 0) localStorage.setItem('farmacias_tumbaco_cache', JSON.stringify(farmacias));
             } catch (error) {
-                huboError = true; // 2. Si falla la red, encendemos la bandera
+                huboError = true;
 
-                // Cumplimiento Heurística 9 (PDF)
                 if (overlay) {
                     overlay.innerHTML = `
-                    <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
-                        <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Error de Conexión</h2>
-                        <p style="margin-bottom: 15px;">No fue posible conectar con el servidor de mapas.</p>
-                        <button id="btn-reintentar-api" class="btn-primary" style="background-color: var(--color-azul-rey); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Reintentar</button>
-                    </div>
-                `;
+                        <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
+                            <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Error de Conexión</h2>
+                            <p style="margin-bottom: 15px;">No fue posible conectar con el servidor de mapas.</p>
+                            <button id="btn-reintentar-api" style="background-color: var(--color-azul-rey); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px;">Reintentar</button>
+                        </div>
+                    `;
                     overlay.classList.remove('oculto');
                     document.getElementById('btn-reintentar-api').onclick = () => fetchFarmacias(radio, forzarOverpass);
                 }
             } finally {
-                // Modificado para ocultar el overlay solo si NO hubo error
                 if (overlay && !huboError) overlay.classList.add('oculto');
                 estaBuscando = false;
             }
         }
 
-        // 3. Evalúa si mostrar los 5km o los pines SOLO si la red no falló
         if (!huboError) {
             if (farmacias.length === 0 && navigator.onLine) {
                 mostrarAviso("No hay resultados a 2km. Toca el botón inferior para buscar a 5km.");
@@ -213,18 +241,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 farmacias.forEach(f => {
                     const m = L.marker([f.lat, f.lon], { icon: iconoFarmacia, keyboard: true }).addTo(markersGroup);
 
-                    // ACCESIBILIDAD: Inyectar atributos para teclado a los pines
                     const markerElement = m.getElement();
                     if (markerElement) {
-                        markerElement.setAttribute('tabindex', '0'); // Entra en el flujo de la tecla TAB
+                        markerElement.setAttribute('tabindex', '0');
                         markerElement.setAttribute('role', 'button');
-                        markerElement.setAttribute('aria-label', `Farmacia: ${f.tags.name || 'Sin nombre'}`);
+                        markerElement.setAttribute('aria-label', `Farmacia: ${f.tags?.name || 'Sin nombre'}`);
 
-                        // Escuchar la tecla Enter o Espacio sobre el pin
                         markerElement.addEventListener('keydown', (e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                m.fire('click'); // Simula un clic con el mouse
+                                m.fire('click');
                             }
                         });
                     }
@@ -234,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (m.getElement()) m.getElement().querySelector('.pin-medico').classList.add('pin-activo');
                         mostrarBottomSheet(f);
 
-                        // Mover el foco al botón de cerrar para mantener el orden lógico
                         const btnCerrar = document.getElementById('btn-cerrar-bs');
                         if (btnCerrar) btnCerrar.focus();
                     });
@@ -252,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchFarmacias();
     }
 
-    // INICIALIZACIÓN PRINCIPAL DEL BOTÓN
+    // ─── INICIALIZACIÓN PRINCIPAL DEL BOTÓN GPS ─────────────────────────────────
     if (btnGPS) {
         btnGPS.classList.remove('skeleton');
 
@@ -300,10 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // EVENTOS SECUNDARIOS
+    // ─── EVENTOS SECUNDARIOS ────────────────────────────────────────────────────
     window.addEventListener('offline', () => {
         if (btnGPS) { btnGPS.disabled = true; btnGPS.textContent = "Sin conexión a internet"; }
-        // Nuevo: Cumplimiento estricto de Heurística 9
         mostrarAviso("Se perdió la conexión. Revisa tu Wi-Fi o datos móviles para continuar.");
     });
     window.addEventListener('online', () => {
@@ -316,9 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRecenter = document.getElementById('btn-recenter');
     if (btnRecenter) btnRecenter.onclick = () => map.setView(ubicacionActiva, 15);
 
+    // BUG 5 FIX: El botón X también usa la utilidad centralizada de cierre
     const btnCerrarBs = document.getElementById('btn-cerrar-bs');
-    if (btnCerrarBs) btnCerrarBs.onclick = () => {
-        if (bottomSheet) bottomSheet.classList.remove('activo');
-        document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
-    };
+    if (btnCerrarBs) btnCerrarBs.onclick = cerrarBottomSheet;
 });

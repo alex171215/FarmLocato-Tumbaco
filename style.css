@@ -499,22 +499,6 @@ html {
 /* =========================================
    BOTÓN CERRAR BOTTOM SHEET (Heurística 3)
 ========================================= */
-#btn-cerrar-bs {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: transparent;
-    border: none;
-    color: var(--color-gris-oscuro);
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s ease;
-    z-index: 10;
-}
 
 #btn-cerrar-bs:hover {
     background-color: rgba(0, 0, 0, 0.05);
@@ -537,24 +521,23 @@ html {
     display: block !important;
 }
 
+/* ÚNICA REGLA CORRECTA */
 #btn-cerrar-bs {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 10px;
+    right: 10px;
     background-color: #f3f4f6;
-    /* Fondo gris claro */
     border: none;
     color: var(--color-superficie);
     cursor: pointer;
-    padding: 6px;
-    display: flex !important;
+    padding: 11px;
+    /* 22px SVG + 11px*2 = 44px ✅ */
+    display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     z-index: 99999;
-    /* Obliga a la X a estar sobre todo */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    /* Sombra para resaltar */
 }
 
 #btn-cerrar-bs svg {
