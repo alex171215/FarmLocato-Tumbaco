@@ -196,10 +196,21 @@ document.addEventListener('DOMContentLoaded', () => {
             estaBuscando = false;
         } else {
             if (!navigator.onLine) {
-                if (overlay) overlay.classList.add('oculto');
-                mostrarAviso("Sin conexión a internet.");
-                estaBuscando = false;
-                return;
+                huboError = true; // <-- CLAVE: Evita que el bloque 'finally' oculte la pantalla
+
+                if (overlay) {
+                    overlay.innerHTML = `
+                        <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
+                            <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Sin Internet</h2>
+                            <p style="margin-bottom: 15px;">Conéctate a una red para cargar las farmacias.</p>
+                            <button id="btn-reintentar-api" style="background-color: var(--color-azul-rey); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px;">Reintentar</button>
+                        </div>
+                    `;
+                    overlay.classList.remove('oculto');
+                    // Asignamos la recarga al botón
+                    document.getElementById('btn-reintentar-api').onclick = () => fetchFarmacias(radio, forzarOverpass);
+                }
+                return; // El bloque 'finally' se encargará de reiniciar 'estaBuscando'
             }
 
             const controller = new AbortController();
@@ -276,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userMarker) map.removeLayer(userMarker);
         userMarker = L.marker(ubicacionActiva, { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
         mapaInicializado = true;
+        window._testFetch = fetchFarmacias;
         fetchFarmacias();
     }
 
