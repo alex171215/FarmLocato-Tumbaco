@@ -201,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (overlay) {
                     overlay.innerHTML = `
                         <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
-                            <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Sin Internet</h2>
-                            <p style="margin-bottom: 15px;">Conéctate a una red para cargar las farmacias.</p>
+                            <h2 style="color: var(--color-rojo-trafico); font-size: 1.2rem; margin-bottom: 10px;">Problema de Conexión</h2>
+                            <p style="margin-bottom: 15px;">Parece que tu red está inestable o desconectada en este momento.</p>
                             <button id="btn-reintentar-api" style="background-color: var(--color-azul-rey); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px;">Reintentar</button>
                         </div>
                     `;
