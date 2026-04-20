@@ -565,28 +565,45 @@ html {
 }
 
 /* =========================================
-   AJUSTE DE ESPACIADO: ZOOM Y RECENTRAR (CORRECCIÓN DEFINITIVA)
+   ACCESIBILIDAD Y GESTALT (FITTS & PROXIMIDAD)
 ========================================= */
-/* 1. Subir el Zoom en móviles (Salvar la barra de navegación iOS/Android) */
-.leaflet-bottom.leaflet-right {
-    margin-bottom: 4rem !important;
+
+/* 1. LEY DE FITTS: Forzar tamaño mínimo de 48x48px en controles nativos de Leaflet */
+.leaflet-touch .leaflet-control-zoom a,
+.leaflet-control-zoom a {
+    width: 3rem !important;
+    /* 48px exactos */
+    height: 3rem !important;
+    /* 48px exactos */
+    line-height: 3rem !important;
+    font-size: 1.5rem !important;
+    /* Símbolos + y - más legibles */
 }
 
-/* 2. Colocar el botón de Recentrar bien arriba del Zoom en móviles */
+/* 2. LEY DE PROXIMIDAD: Agrupación visual de controles de navegación */
+.leaflet-bottom.leaflet-right {
+    margin-bottom: 3.5rem !important;
+    /* Altura segura para la barra de navegación del móvil */
+    margin-right: 1rem !important;
+}
+
 .btn-recenter {
-    bottom: 9.5rem !important;
-    right: 0.8rem !important;
+    /* MATEMÁTICA EXACTA: Margen del zoom (3.5rem) + Alto de los 2 botones de zoom (6rem) + Gap visual (0.5rem) */
+    bottom: calc(10rem) !important;
+    right: 1rem !important;
+    /* Misma alineación que el zoom */
 }
 
 /* 3. Ajuste fino de posiciones para la versión de Escritorio (PC) */
 @media (min-width: 768px) {
     .leaflet-bottom.leaflet-right {
-        margin-bottom: 2.5rem !important;
+        margin-bottom: 2rem !important;
+        margin-right: 2rem !important;
     }
 
     .btn-recenter {
-        bottom: 10.5rem !important;
-        /* <-- AUMENTAMOS DE 8.5rem a 10.5rem PARA DARLE RESPIRO */
-        right: 0.8rem !important;
+        /* Margen PC (2rem) + Alto botones (6rem) + Gap (0.5rem) */
+        bottom: calc(8.5rem) !important;
+        right: 2rem !important;
     }
 }
