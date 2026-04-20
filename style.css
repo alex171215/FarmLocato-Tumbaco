@@ -602,9 +602,9 @@ html {
 .btn-recenter {
     width: 44px !important;
     height: 44px !important;
-    /* Subimos 12px (de 110 a 122) para compensar el margen que le dimos al Zoom 
-       y mantener exactamente el mismo gap que te gustó en el celular */
-    bottom: calc(3.5rem + 122px) !important;
+    /* Reducido drásticamente de 122px a 98px. 
+       Esto compensa el texto de Leaflet que se divide en 2 líneas en celulares reales */
+    bottom: calc(3.5rem) !important;
     right: 1rem !important;
     background-color: var(--color-blanco);
     border: none !important;
