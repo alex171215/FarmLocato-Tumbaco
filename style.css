@@ -46,7 +46,7 @@ html {
 #map {
     width: 100vw;
     height: 100vh;
-    background-color: var(--color-gris-fondo);
+    background-color: #f8f4f0;
     z-index: 1;
 }
 
