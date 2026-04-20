@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ubicacionActiva = centroTumbaco;
     let userMarker = null;
     let estaBuscando = false;
+    let mapaInicializado = false;
 
     const limitesTumbaco = L.latLngBounds(L.latLng(-0.2500, -78.4500), L.latLng(-0.1800, -78.3500));
 
@@ -274,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         map.setView(ubicacionActiva, 15);
         if (userMarker) map.removeLayer(userMarker);
         userMarker = L.marker(ubicacionActiva, { icon: iconoUsuario, interactive: false, zIndexOffset: -100 }).addTo(map);
+        mapaInicializado = true;
         fetchFarmacias();
     }
 
@@ -332,6 +334,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     window.addEventListener('online', () => {
         if (btnGPS) { btnGPS.disabled = false; btnGPS.textContent = "Activar GPS"; }
+
+        // NUEVO: Si el mapa ya cargó pero no hay farmacias, reintentar automáticamente
+        if (mapaInicializado && markersGroup.getLayers().length === 0 && !estaBuscando) {
+            mostrarAviso("Conexión restaurada. Buscando farmacias...");
+            estaBuscando = true;
+            fetchFarmacias();
+        }
     });
 
     const btnExpandir = document.getElementById('btn-expandir-5km');
