@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aviso && txtAviso) {
             txtAviso.textContent = mensaje;
             aviso.classList.remove('oculto');
-            setTimeout(() => aviso.classList.add('oculto'), 5000);
+            setTimeout(() => aviso.classList.add('oculto'), 7000);
         }
     }
 
