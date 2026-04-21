@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wa: '593968223333',
             tel: '1800392322'
         },
-        'sana sana': {
+        'sana': {
             wa: null, // No tienen WA nacional unificado público confiable
             tel: '1700726272'
         },
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wa: '593983605347',
             tel: '1800633424'
         },
-        'economicas': { // Farmacias Económicas
+        'economica': { // Farmacias Económicas
             wa: '593992043737',
             tel: '1800326666'
         },
