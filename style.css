@@ -596,14 +596,14 @@ html {
 
 /* 3. Controlamos la marca de agua independientemente */
 .leaflet-control-attribution {
-    margin-bottom: 3.5rem !important;
+    margin-bottom: 3rem !important;
     /* Bajamos ligeramente la marca de agua en móviles */
 }
 
 /* 4. POSICIONAMIENTO MÓVIL (Y Landscape) - Matemáticas 100% estables */
 .leaflet-control-zoom {
     /* Reducimos el espacio de 30px a solo 5px para pegarlo a la marca de agua */
-    bottom: calc(3.5rem + 5px) !important;
+    bottom: calc(3rem + 5px) !important;
     right: 1rem !important;
 }
 
@@ -611,7 +611,7 @@ html {
     width: 44px !important;
     height: 44px !important;
     /* Zoom base (3.5rem + 5px) + Alto del Zoom (89px) + Gap seguro intacto (12px) = 106px */
-    bottom: calc(3.5rem + 106px) !important;
+    bottom: calc(3rem + 106px) !important;
     right: 1rem !important;
     background-color: var(--color-blanco);
     border: none !important;
