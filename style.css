@@ -198,9 +198,11 @@ html {
     /* Solo bordes superiores */
     box-shadow: 0 -0.5rem 1.5rem rgba(0, 0, 0, 0.2);
 
-    /* ESTADO INICIAL: Escondido debajo de la pantalla */
+    /* ESTADO INICIAL: Escondido visualmente y del teclado (WCAG) */
     transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+    /* Truco IHC: Al cerrar, espera 0.4s a que baje la tarjeta antes de ocultarse del sistema */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s;
 
     display: flex;
     flex-direction: column;
@@ -211,6 +213,10 @@ html {
 /* Estado cuando se hace clic en un pin */
 #bottom-sheet.activo {
     transform: translateY(0);
+    visibility: visible;
+    /* Lo hace tabulable de nuevo */
+    /* Al abrir, la visibilidad es instantánea para que el JS pueda enfocar el botón X */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s;
 }
 
 /* Diseño para Desktop (PC) */
@@ -547,6 +553,14 @@ html {
 :focus-visible {
     outline: 3px solid var(--color-azul-rey);
     outline-offset: 2px;
+}
+
+/* CORRECCIÓN LEY DE FITTS: Foco interno para botones de Zoom */
+/* Evita que el 'overflow: hidden' del contenedor moderno se trague el borde azul */
+.leaflet-control-zoom a:focus-visible {
+    outline: none !important;
+    box-shadow: inset 0 0 0 3px var(--color-azul-rey) !important;
+    background-color: #f0f0f0 !important;
 }
 
 /* Foco específico para los pines del mapa */
