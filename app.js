@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wa: '593983605347',
             tel: '1800633424'
         },
-        'económicas': { // Farmacias Económicas
+        'economicas': { // Farmacias Económicas
             wa: '593992043737',
             tel: '1800326666'
         },
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             if (!navigator.onLine) {
                 huboError = true;
-
+                estaBuscando = false;
                 if (overlay) {
                     overlay.innerHTML = `
                         <div class="loading-text" style="text-align: center; color: var(--color-superficie);">
