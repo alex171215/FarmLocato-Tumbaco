@@ -5,6 +5,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const aviso = document.getElementById('aviso-ubicacion');
     const txtAviso = document.getElementById('txt-aviso');
 
+    const CONTACTOS_MAESTROS = {
+        'fybeca': {
+            wa: '593968223333',
+            tel: '1800392322'
+        },
+        'sana sana': {
+            wa: null, // No tienen WA nacional unificado público confiable
+            tel: '1700726272'
+        },
+        'pharmacy': { // Cubre "Pharmacy's"
+            wa: '593981297551',
+            tel: '043730793' // O el código corto *9000
+        },
+        'cruz azul': {
+            wa: '593969872794',
+            tel: '043730780' // Mismo número para ambos
+        },
+        'medicity': {
+            wa: '593983605347',
+            tel: '1800633424'
+        },
+        'económicas': { // Farmacias Económicas
+            wa: '593992043737',
+            tel: '1800326666'
+        },
+        'ecuapharma': {
+            wa: '593981292581',
+            tel: '025154214' // Matriz Quito
+        }
+    };
+
     // 2. CONFIGURACIÓN DEL MAPA
     const centroTumbaco = [-0.2135, -78.4025];
     let ubicacionActiva = centroTumbaco;
@@ -38,26 +69,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconoUsuario = L.divIcon({ className: 'user-marker', html: `<div class="user-pulse"></div><div class="user-dot"></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
 
     // ─── UTILIDAD DE CIERRE CENTRALIZADA ───────────────────────────────────────
-    // BUG 5 FIX: Toda lógica de cierre pasa por aquí para garantizar que
-    // aria-hidden="true" siempre se aplique al cerrar, en los 3 puntos de escape.
     function cerrarBottomSheet() {
         if (!bottomSheet) return;
         bottomSheet.classList.remove('activo');
-        bottomSheet.setAttribute('aria-hidden', 'true'); // ← BUG 5 FIX
+        bottomSheet.setAttribute('aria-hidden', 'true');
         document.querySelectorAll('.pin-medico').forEach(p => p.classList.remove('pin-activo'));
     }
 
-    // CIERRE DE BOTTOM SHEET (Clic en mapa)
     map.on('click', cerrarBottomSheet);
 
-    // CIERRE DE BOTTOM SHEET (Deslizamiento / Swipe hacia abajo)
     let startY = 0;
     if (bottomSheet) {
         bottomSheet.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
         bottomSheet.addEventListener('touchmove', (e) => {
             e.stopPropagation();
             if (e.touches[0].clientY - startY > 40) {
-                cerrarBottomSheet(); // ← Usa la utilidad centralizada
+                cerrarBottomSheet();
             }
         }, { passive: false });
     }
@@ -79,18 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // ─── SVG ÍCONOS (BUG 4 FIX) ────────────────────────────────────────────────
-    // Definidos como constantes para no repetir el markup en cada llamada.
-    const SVG_WHATSAPP = `
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.845L.057 23.428l5.752-1.506A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.694-.497-5.241-1.369l-.373-.221-3.415.895.91-3.326-.243-.387A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-        </svg>`;
-
-    const SVG_TELEFONO = `
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-        </svg>`;
 
     // ─── RENDER BOTTOM SHEET ────────────────────────────────────────────────────
     function mostrarBottomSheet(farmacia) {
@@ -121,41 +136,64 @@ document.addEventListener('DOMContentLoaded', () => {
             contenedorHorario.style.display = 'none';
         }
 
-        // ── ALGORITMO DE CONTACTO ADAPTATIVO (BUG 4 FIX) ──────────────────────
-        const elemContacto = document.getElementById('btn-contacto');
-        const txtContacto = document.getElementById('text-contacto');
-        const iconContainer = document.getElementById('icon-container'); // ← Nueva referencia
-        let telefono = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || "";
+        // ── ALGORITMO DE CONTACTO DUAL ADAPTATIVO ──────────────────────
+        const contenedorContactos = document.getElementById('contenedor-contactos');
+        const btnWa = document.getElementById('btn-whatsapp');
+        const btnTel = document.getElementById('btn-llamar');
 
-        if (!telefono) {
-            // Sin teléfono: ocultar botón completo (Heurística 5 — Prevención de errores)
-            elemContacto.style.display = 'none';
-        } else {
-            elemContacto.style.display = 'flex';
-            let telLimpio = telefono.replace(/[\s\-\(\)]/g, '');
+        // Reset visual preventivo
+        btnWa.style.display = 'none';
+        btnTel.style.display = 'none';
+        contenedorContactos.style.display = 'none';
 
-            if (telLimpio.startsWith('09') || telLimpio.startsWith('+5939') || telLimpio.startsWith('5939')) {
-                // Rama WhatsApp: botón verde + ícono de WhatsApp
-                txtContacto.textContent = "WhatsApp";
-                iconContainer.innerHTML = SVG_WHATSAPP;         // ← BUG 4 FIX
-                elemContacto.style.backgroundColor = "var(--color-verde-whatsapp)";
-                elemContacto.style.color = "white";
-                elemContacto.setAttribute('aria-label', 'Contactar por WhatsApp');
-                elemContacto.onclick = () => window.open(
-                    `https://wa.me/${telLimpio.startsWith('09') ? '593' + telLimpio.substring(1) : telLimpio.replace('+', '')}`,
-                    '_blank'
-                );
+        const nombreFarmacia = (tags.name || "").toLowerCase();
+        // Normalización para evitar problemas con tildes (ej. Económicas)
+        const nombreNorm = nombreFarmacia.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        let numWa = null;
+        let numTel = null;
+
+        // 1. Prioridad: Buscar en Contactos Maestros
+        let keyMaestra = Object.keys(CONTACTOS_MAESTROS).find(key => nombreNorm.includes(key));
+        if (keyMaestra) {
+            numWa = CONTACTOS_MAESTROS[keyMaestra].wa;
+            numTel = CONTACTOS_MAESTROS[keyMaestra].tel;
+        }
+
+        // 2. Complemento: Datos provenientes de OpenStreetMap
+        let osmPhone = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || "";
+        if (osmPhone) {
+            let telLimpio = osmPhone.replace(/[\s\-\(\)\+]/g, '');
+            if (telLimpio.startsWith('09') || telLimpio.startsWith('5939')) {
+                if (!numWa) numWa = telLimpio; // Solo asinga si el maestro no lo tenía
+                if (!numTel) numTel = telLimpio;
             } else {
-                // Rama llamada: botón gris + ícono de teléfono
-                txtContacto.textContent = "Llamar";
-                iconContainer.innerHTML = SVG_TELEFONO;         // ← BUG 4 FIX
-                elemContacto.style.backgroundColor = "#757575";
-                elemContacto.style.color = "white";
-                elemContacto.setAttribute('aria-label', 'Llamar por teléfono');
-                elemContacto.onclick = () => window.open(`tel:${telLimpio}`, '_self');
+                if (!numTel) numTel = telLimpio; // Es un número fijo
             }
         }
 
+        // 3. Renderizado Condicional Final
+        let hayContacto = false;
+
+        if (numWa) {
+            hayContacto = true;
+            btnWa.style.display = 'flex';
+            let waClean = numWa.startsWith('09') ? '593' + numWa.substring(1) : numWa;
+            // Heurística 7: Mensaje prellenado para eficiencia de uso
+            btnWa.onclick = () => window.open(`https://wa.me/${waClean}?text=${encodeURIComponent("Hola, deseo consultar disponibilidad de un producto.")}`, '_blank');
+        }
+
+        if (numTel) {
+            hayContacto = true;
+            btnTel.style.display = 'flex';
+            btnTel.onclick = () => window.open(`tel:${numTel}`, '_self');
+        }
+
+        if (hayContacto) {
+            contenedorContactos.style.display = 'flex';
+        }
+
+        // ── NAVEGACIÓN ──────────────────────
         const btnNavegar = document.getElementById('btn-navegar');
         btnNavegar.onclick = () => {
             const latOrigen = parseFloat(ubicacionActiva[0]);
@@ -166,8 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.open(urlMap, '_blank');
         };
 
-        // BUG 5 FIX: Quitar aria-hidden ANTES de mostrar, para que los screen
-        // readers anuncien el diálogo correctamente en el momento que aparece.
         bottomSheet.removeAttribute('aria-hidden');
         bottomSheet.classList.add('activo');
     }
@@ -196,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             estaBuscando = false;
         } else {
             if (!navigator.onLine) {
-                huboError = true; // <-- CLAVE: Evita que el bloque 'finally' oculte la pantalla
+                huboError = true;
 
                 if (overlay) {
                     overlay.innerHTML = `
@@ -207,10 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     overlay.classList.remove('oculto');
-                    // Asignamos la recarga al botón
                     document.getElementById('btn-reintentar-api').onclick = () => fetchFarmacias(radio, forzarOverpass);
                 }
-                return; // El bloque 'finally' se encargará de reiniciar 'estaBuscando'
+                return;
             }
 
             const controller = new AbortController();
@@ -243,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 estaBuscando = false;
             }
         }
+
+
 
         if (!huboError) {
             if (farmacias.length === 0 && navigator.onLine) {
@@ -346,7 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('online', () => {
         if (btnGPS) { btnGPS.disabled = false; btnGPS.textContent = "Activar GPS"; }
 
-        // NUEVO: Si el mapa ya cargó pero no hay farmacias, reintentar automáticamente
         if (mapaInicializado && markersGroup.getLayers().length === 0 && !estaBuscando) {
             mostrarAviso("Conexión restaurada. Buscando farmacias...");
             estaBuscando = true;
@@ -360,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRecenter = document.getElementById('btn-recenter');
     if (btnRecenter) btnRecenter.onclick = () => map.setView(ubicacionActiva, 15);
 
-    // BUG 5 FIX: El botón X también usa la utilidad centralizada de cierre
     const btnCerrarBs = document.getElementById('btn-cerrar-bs');
     if (btnCerrarBs) btnCerrarBs.onclick = cerrarBottomSheet;
 });
