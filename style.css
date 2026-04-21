@@ -29,7 +29,6 @@
     border-width: 0;
     z-index: -1;
     pointer-events: none;
-    /* Evita interferir con clics en la UI */
 }
 
 body,
@@ -39,10 +38,9 @@ html {
     font-family: Arial, sans-serif;
     background-color: var(--color-gris-fondo);
     overflow: hidden;
-    /* Bloquea el scroll de la página entera */
 }
 
-/* Contenedor del mapa: 100% de la pantalla siempre */
+/* Contenedor del mapa */
 #map {
     width: 100vw;
     height: 100vh;
@@ -54,7 +52,6 @@ html {
 .leaflet-tile-pane {
     filter: grayscale(100%) contrast(0.8);
 }
-
 
 /* =========================================
    OVERLAY DE CARGA (H1)
@@ -73,7 +70,6 @@ html {
     justify-content: center;
     z-index: 20000;
     pointer-events: auto;
-    /* Asegurar interceptación mientras es visible */
     transition: opacity 0.5s ease;
     gap: 3rem;
     text-align: center;
@@ -122,7 +118,6 @@ html {
     opacity: 0.8;
 }
 
-/* Ocultar overlay mediante clase */
 .oculto {
     opacity: 0;
     pointer-events: none !important;
@@ -140,21 +135,17 @@ html {
 
 .pin-medico {
     width: 3rem;
-    /* Actualización para Fitts Law si queremos 48px, o 2.18rem (35px) /* Dejamos a 3rem (48px) para mobile */
     height: 3rem;
     background-color: var(--color-rojo-trafico);
     border: 0.15rem solid #000000;
-    /* Contorno negro puro para máxima visibilidad */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s ease;
-    /* Feedback visual suave */
 }
 
-/* La cruz blanca usando pseudo-elementos para que se vea perfecta */
 .pin-medico::before,
 .pin-medico::after {
     content: '';
@@ -162,24 +153,20 @@ html {
     background-color: white;
 }
 
-/* Línea horizontal de la cruz */
 .pin-medico::before {
     width: 1.5rem;
     height: 0.35rem;
 }
 
-/* Línea vertical de la cruz */
 .pin-medico::after {
     width: 0.35rem;
     height: 1.5rem;
 }
 
-/* Efecto al tocar el pin (H6: Feedback) */
 .pin-medico:active,
 .pin-activo {
     transform: scale(1.3);
     background-color: #FF0000;
-    /* Un rojo más brillante al tocar */
     border-color: var(--color-azul-rey);
 }
 
@@ -191,35 +178,25 @@ html {
     bottom: 0;
     left: 0;
     width: 100%;
-    /* Mobile First: ancho total */
     background-color: var(--color-blanco);
     z-index: 10000;
     border-radius: 1.25rem 1.25rem 0 0;
-    /* Solo bordes superiores */
     box-shadow: 0 -0.5rem 1.5rem rgba(0, 0, 0, 0.2);
-
-    /* ESTADO INICIAL: Escondido visualmente y del teclado (WCAG) */
     transform: translateY(100%);
     visibility: hidden;
-    /* Truco IHC: Al cerrar, espera 0.4s a que baje la tarjeta antes de ocultarse del sistema */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s;
-
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
     gap: 1rem;
 }
 
-/* Estado cuando se hace clic en un pin */
 #bottom-sheet.activo {
     transform: translateY(0);
     visibility: visible;
-    /* Lo hace tabulable de nuevo */
-    /* Al abrir, la visibilidad es instantánea para que el JS pueda enfocar el botón X */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s;
 }
 
-/* Diseño para Desktop (PC) */
 @media (min-width: 768px) {
     #bottom-sheet {
         left: 50% !important;
@@ -239,9 +216,7 @@ html {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    /* Espacio entre icono y texto */
     height: 3.5rem;
-    /* Asegura los 56px para Ley de Fitts */
     border: none;
     border-radius: 0.75rem;
     font-weight: bold;
@@ -254,7 +229,6 @@ html {
     width: 1.5rem;
     height: 1.5rem;
     fill: currentColor;
-    /* El icono toma el color del texto */
 }
 
 /* =========================================
@@ -307,11 +281,8 @@ html {
     position: fixed;
     right: 1.25rem;
     bottom: 5.5rem;
-    /* 20px mobile aprox */
     width: 3rem;
-    /* 48px Fitts Law */
     height: 3rem;
-    /* 48px Fitts Law */
     background-color: var(--color-blanco);
     border: none;
     border-radius: 50%;
@@ -334,11 +305,9 @@ html {
     fill: var(--color-superficie);
 }
 
-/* RESPONSIVITY: Desktop (min-width: 768px) */
 @media (min-width: 768px) {
     .bs-drag-handle {
         display: none;
-        /* Hide drag handle on desktop */
     }
 
     .btn-recenter {
@@ -353,22 +322,16 @@ html {
 #brand-watermark {
     position: fixed;
     top: 1rem;
-    /* Margen superior */
     left: 50%;
     transform: translateX(-50%);
-    /* Centrado perfecto */
     background-color: var(--color-fondo-overlay);
-    /* Un fondo semitransparente */
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    /* Estilo píldora */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     font-size: 0.85rem;
     color: var(--color-superficie);
     z-index: 9998;
-    /* Sobre el mapa, bajo el overlay de carga */
     pointer-events: none;
-    /* CRÍTICO: Permite que los toques traspasen el título y muevan el mapa */
 }
 
 /* =========================================
@@ -381,12 +344,9 @@ html {
     width: 100vw;
     height: 100vh;
     background-color: var(--color-blanco);
-    /* H1: Opacidad Total */
     z-index: 10001;
-    /* Sobre todo */
     display: flex;
     pointer-events: auto;
-    /* Asegurar que capture toques antes de inicializarse el mapa */
     justify-content: center;
     align-items: center;
     padding: 1.5rem;
@@ -424,7 +384,6 @@ html {
 #btn-activar-gps {
     width: 100%;
     min-height: 3.5rem;
-    /* 56px Fitts Law */
     background-color: var(--color-azul-rey);
     color: var(--color-blanco);
     border: none;
@@ -479,7 +438,6 @@ html {
     color: var(--color-blanco);
     border: none;
     border-radius: 2rem;
-    /* Pill shape */
     padding: 0.5rem 2rem;
     font-weight: bold;
     font-size: 1rem;
@@ -487,7 +445,6 @@ html {
     cursor: pointer;
     z-index: 9999;
     min-height: 2.75rem;
-    /* 44px Fitts Law */
     transition: transform 0.2s ease, opacity 0.3s ease;
     display: flex;
     align-items: center;
@@ -501,7 +458,6 @@ html {
 .btn-expandir.oculto {
     display: none;
 }
-
 
 /* =========================================
    BARRA GRIS Y BOTÓN X (CORRECCIÓN IHC)
@@ -520,12 +476,10 @@ html {
     top: 15px;
     right: 15px;
     background-color: #e5e5e5;
-    /* Más oscuro para que resalte claramente contra el blanco */
     border: none;
     color: var(--color-superficie);
     cursor: pointer;
     padding: 11px;
-    /* Mantiene el área táctil de 44px (Ley de Fitts) */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -543,44 +497,35 @@ html {
     height: 22px;
     stroke: currentColor;
     stroke-width: 2.5;
-    /* Hace la X más gruesa y visible */
 }
 
 /* =========================================
    ACCESIBILIDAD TECLADO (WCAG 2.2)
 ========================================= */
-/* Foco general para botones */
 :focus-visible {
     outline: 3px solid var(--color-azul-rey);
     outline-offset: 2px;
 }
 
-/* CORRECCIÓN LEY DE FITTS: Foco interno para botones de Zoom */
-/* Evita que el 'overflow: hidden' del contenedor moderno se trague el borde azul */
 .leaflet-control-zoom a:focus-visible {
     outline: none !important;
     box-shadow: inset 0 0 0 3px var(--color-azul-rey) !important;
     background-color: #f0f0f0 !important;
 }
 
-/* Foco específico para los pines del mapa */
 .leaflet-marker-icon:focus-visible {
     outline: 4px solid var(--color-rojo-trafico);
     outline-offset: 4px;
     border-radius: 50%;
     background-color: rgba(255, 255, 255, 0.5);
-    /* Resalta aún más el fondo */
 }
 
 /* =========================================
    SISTEMA DE NAVEGACIÓN (CORRECCIÓN INFALIBLE ABSOLUTA)
 ========================================= */
-
-/* 1. Sacamos el Zoom del control de Leaflet para evitar que el texto lo rompa */
 .leaflet-touch .leaflet-control-zoom,
 .leaflet-control-zoom {
     position: fixed !important;
-    /* MAGIA: Fijo a la pantalla, no al mapa */
     margin: 0 !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
@@ -593,7 +538,6 @@ html {
     z-index: 9998 !important;
 }
 
-/* 2. LEY DE FITTS: Botones de 44x44px exactos limpios */
 .leaflet-touch .leaflet-control-zoom a,
 .leaflet-control-zoom a {
     width: 44px !important;
@@ -608,15 +552,11 @@ html {
     justify-content: center;
 }
 
-/* 3. Controlamos la marca de agua independientemente */
 .leaflet-control-attribution {
     margin-bottom: 3rem !important;
-    /* Bajamos ligeramente la marca de agua en móviles */
 }
 
-/* 4. POSICIONAMIENTO MÓVIL (Y Landscape) - Matemáticas 100% estables */
 .leaflet-control-zoom {
-    /* Reducimos el espacio de 30px a solo 5px para pegarlo a la marca de agua */
     bottom: calc(3rem + 5px) !important;
     right: 1rem !important;
 }
@@ -624,7 +564,6 @@ html {
 .btn-recenter {
     width: 44px !important;
     height: 44px !important;
-    /* Zoom base (3.5rem + 5px) + Alto del Zoom (89px) + Gap seguro intacto (12px) = 106px */
     bottom: calc(3rem + 106px) !important;
     right: 1rem !important;
     background-color: var(--color-blanco);
@@ -633,11 +572,9 @@ html {
     z-index: 9998 !important;
 }
 
-/* 5. POSICIONAMIENTO EN COMPUTADORA (Restaura lo que ya funcionaba) */
 @media (min-width: 768px) {
     .leaflet-control-attribution {
         margin-bottom: 0 !important;
-        /* Marca de agua normal en PC */
     }
 
     .leaflet-control-zoom {
@@ -646,7 +583,6 @@ html {
     }
 
     .btn-recenter {
-        /* Zoom position (30px) + Alto del Zoom (89px) + Gap (12px) = 131px */
         bottom: 131px !important;
         right: 24px !important;
     }
